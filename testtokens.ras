@@ -1,0 +1,44 @@
+program
+var
+procedure
+function
+begin
+end
+false
+true
+if
+then
+else
+while
+do
+read
+write
+and
+or
+not
+div
+(
+)
+.
+,
+;
++
+-
+*
+=
+<>
+>
+<
+>=
+<=
+:=
+:
+// teste inline comentario
+{
+  teste
+  do
+  comentario
+  bloco
+}
+teste
+101010
