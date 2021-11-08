@@ -48,6 +48,7 @@ extern A_Programa raiz_ast;
    A_LstDecSub secDecVar;
    A_LstDecVar secDecSub;
    A_CmdComp cmdComp;
+   A_Exp exp;
 }
 
 /* Os nomes associados aos tokens definidos aqui serão armazenados um uma 
@@ -98,9 +99,12 @@ extern A_Programa raiz_ast;
 %type <programa> programa
 %type <secDecVar> secao_declara_vars
 %type <secDecSub> secao_declara_subrotinas
-%type <cmdComp> comando_composto declara_vars declara_var lista_identificadores declara_proced proced declara_func func parametros_formais parametros declara_parametros comandos comando atribuicao chamada_procedimento condicional repeticao leitura escrita lista_expressoes expressao relacao expressao_simples termo fator variavel logico chamada_funcao 
+%type <cmdComp> comando_composto declara_vars declara_var lista_identificadores declara_proced proced declara_func func parametros_formais parametros declara_parametros comandos comando atribuicao chamada_procedimento condicional repeticao leitura escrita lista_expressoes fator variavel chamada_funcao 
+%type <exp> expressao expressao_simples termo
 %type <bloco> bloco
 %type <str> tipo
+%type <str> logico
+%type <int> T_NUMERO
 
 %define parse.error verbose
 %define parse.lac full
@@ -109,10 +113,10 @@ extern A_Programa raiz_ast;
 
 %%
 
-programa: T_PROGRAM T_IDENT T_PONTO_E_VIRGULA bloco T_PONTO { $$ = NULL }
+programa: T_PROGRAM T_IDENT T_PONTO_E_VIRGULA bloco T_PONTO { raiz_ast = A_programa($2, $4); }
 ;
 
-bloco: secao_declara_vars secao_declara_subrotinas comando_composto { $$ = NULL }
+bloco: secao_declara_vars secao_declara_subrotinas comando_composto { $$ = A_bloco($1, $2, $3); }
 ;
 
 secao_declara_vars: T_VAR declara_vars T_PONTO_E_VIRGULA { $$ = NULL; }
@@ -180,7 +184,7 @@ comando: atribuicao { $$ = NULL; }
         | comando_composto { $$ = NULL; }
 ;
 
-atribuicao: T_IDENT T_ATRIBUICAO expressao { $$ = NULL; }
+atribuicao: T_IDENT T_ATRIBUICAO expressao { $$ = A_atribExp($1, $3); }
 ;
 
 chamada_procedimento: T_IDENT { $$ = NULL; }
@@ -204,32 +208,29 @@ lista_expressoes: lista_expressoes T_VIRGULA expressao { $$ = NULL; }
                 | expressao { $$ = NULL; }
 ;
 
-expressao: expressao_simples { $$ = NULL; }
-        | expressao_simples relacao expressao_simples { $$ = NULL; }
+expressao: expressao_simples { $$ = $1; }
+        | expressao_simples T_IGUAL expressao_simples { $$ = A_opExp($1, A_eqOp, $3); }
+        | expressao_simples T_DIFERENTE expressao_simples { $$ = A_opExp($1, A_neqOp, $3); }
+        | expressao_simples T_MENOR expressao_simples { $$ = A_opExp($1, A_ltOp, $3); }
+        | expressao_simples T_MENOR_IGUAL expressao_simples { $$ = A_opExp($1, A_leOp, $3); }
+        | expressao_simples T_MAIOR expressao_simples { $$ = A_opExp($1, A_gtOp, $3); }
+        | expressao_simples T_MAIOR_IGUAL expressao_simples { $$ = A_opExp($1, A_geOp, $3); }
 ;
 
-relacao: T_IGUAL { $$ = NULL; }
-      | T_DIFERENTE { $$ = NULL; }
-      | T_MENOR { $$ = NULL; }
-      | T_MENOR_IGUAL { $$ = NULL; }
-      | T_MAIOR { $$ = NULL; }
-      | T_MAIOR_IGUAL { $$ = NULL; }
+expressao_simples: expressao_simples T_MAIS termo { $$ =  A_opExp($1, A_somaOp, $3); }
+                | expressao_simples T_MENOS termo { $$ =  A_opExp($1, A_subOp, $3); }
+                | expressao_simples T_OR termo { $$ =  A_opExp($1, A_orOp, $3); }
+                | termo { $$ = $1; }
 ;
 
-expressao_simples: expressao_simples T_MAIS termo { $$ = NULL; }
-                | expressao_simples T_MENOS termo { $$ = NULL; }
-                | expressao_simples T_OR termo { $$ = NULL; }
-                | termo { $$ = NULL; }
+termo: termo T_MULT fator { $$ = A_opExp($1, A_multOp, $3); }
+    | termo T_DIV fator { $$ = A_opExp($1, A_divOp, $3); }
+    | termo T_AND fator { $$ = A_opExp($1, A_andOp, $3); }
+    | fator { $$ = $1; }
 ;
 
-termo: termo T_MULT fator { $$ = NULL; }
-    | termo T_DIV fator { $$ = NULL; }
-    | termo T_AND fator { $$ = NULL; }
-    | fator { $$ = NULL; }
-;
-
-fator: variavel { $$ = NULL; }
-      | T_NUMERO { $$ = NULL; }
+fator: variavel { $$ = $1; }
+      | T_NUMERO { $$ = $1; }
       | logico { $$ = NULL; }
       | chamada_funcao { $$ = NULL; }
       | T_ABRE_PARENTESES expressao T_FECHA_PARENTESES { $$ = NULL; }
@@ -237,11 +238,11 @@ fator: variavel { $$ = NULL; }
       | T_MENOS fator { $$ = NULL; }
 ;
 
-variavel: T_IDENT { $$ = NULL; }
+variavel: T_IDENT { $$ = $1; }
 ;
 
-logico: T_FALSE { $$ = NULL; }
-      | T_TRUE { $$ = NULL; }
+logico: T_FALSE { $$ = "false"; }
+      | T_TRUE { $$ = "true"; }
 ;
 
 chamada_funcao: T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = NULL; }
