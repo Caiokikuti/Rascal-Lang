@@ -10,5 +10,4 @@ typedef char* String;
 void ajustaPosicao(void);
 void *checked_malloc(int len);
 String string(String);
-extern int EM_tokPos;
 #endif

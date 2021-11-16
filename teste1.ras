@@ -1,5 +1,5 @@
 program meu_programa;
 var a, b, c: integer;
-    x, y: integer;
+    x, y, z: integer;
 begin
 end.

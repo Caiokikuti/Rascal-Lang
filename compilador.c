@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ast.h"
-// #include "sintatico.tab.h"
+#include "sintatico.tab.h"
 
-A_Programa raiz_ast;
+A_programa raiz_ast;
 
 /* Compilar:
    $ make

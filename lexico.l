@@ -2,13 +2,11 @@
 
   #include <stdio.h>
   #include <string.h>
-  #include "tokens.h"
   #include "util.h"
-  // #include "sintatico.tab.h"
+  #include "errormsg.h"
+  #include "sintatico.tab.h"
 
   #define DEBUG 1
-
-  Token yylval;
 
   #ifdef DEBUG
     #define IMPRIME(nome) printf("<%s, '%s'> (linha: %d)\n", nome, yytext, nl);
@@ -68,8 +66,8 @@ numero [0-9]+
 ":="                            { ajustaPosicao();  return T_ATRIBUICAO; }
 ":"                             { ajustaPosicao();  return T_DOIS_PONTOS; }
 
-{ident}                         { ajustaPosicao();  yylval.strval = string(yytext); return T_IDENT; }
-{numero}                        { ajustaPosicao();  yylval.intval = atoi(yytext); return T_NUMERO; }
+{ident}                         { ajustaPosicao();  yylval.str = string(yytext); return T_IDENT; }
+{numero}                        { ajustaPosicao();  yylval.num = atoi(yytext); return T_NUMERO; }
 
 {branco}                        { ajustaPosicao(); }
 {pulo_linha}                    { ajustaPosicao(); nl++; }
