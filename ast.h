@@ -5,14 +5,17 @@
 
 typedef struct A_Programa_ *A_programa;
 typedef struct A_Bloco_ *A_bloco;
-typedef struct A_LstDecSub_ *A_lstDecSub;
 typedef struct A_CmdComp *A_CmdComp;
 typedef struct A_Exp_ *A_exp;
 typedef struct A_Var_ *A_var;
 typedef struct A_Dec_ *A_dec;
-typedef struct A_LstDec_ *A_lstDec;
 typedef struct A_LstIdent_ *A_lstIdent;
 typedef struct A_LstDecVar_ *A_lstDecVar;
+typedef struct A_LstDecFunc_ *A_lstDecFunc;
+typedef struct A_LstDecSub_ *A_lstDecSub;
+typedef struct A_FuncDec_ *A_funcDec;
+typedef struct A_ProcDec_ *A_procDec;
+typedef struct A_LstDecProc_ *A_lstDecProc;
 
 typedef enum {
   A_eqOp,
@@ -33,11 +36,12 @@ struct A_Dec_ {
   enum {
     A_varDec,
     A_functionDec,
-    A_procDec,
+    A_procedureDec,
     A_typeDec
   } tipo;
-  
   union {
+    A_funcDec func;
+    A_procDec proc;
     struct {
       String id;
       String tipo;
@@ -50,9 +54,32 @@ struct A_LstDecVar_ {
   A_lstDecVar prox;
 };
 
-struct A_LstDec_ {
-  A_lstDec listDec;
-  String tipo;
+struct A_FuncDec_ {
+	String id;
+	A_lstDecVar params;
+	String returnType;
+	A_bloco bloco;
+};
+
+struct A_LstDecFunc_ {
+  A_funcDec funcDec;
+  A_lstDecFunc prox;
+};
+
+struct A_ProcDec_ {
+	String id;
+	A_lstDecVar params;
+	A_bloco bloco;
+};
+
+struct A_LstDecProc_ {
+  A_procDec procDec;
+  A_lstDecProc prox;
+};
+
+struct A_LstDecSub_ {
+  A_lstDecFunc lstDecFunc;
+  A_lstDecProc lstDecProc;
 };
 
 struct A_Programa_ {
@@ -98,12 +125,6 @@ struct A_Exp_ {
   } u;
 };
 
-struct A_LstDecSub_ {
-    // implementar...
-};
-
-
-
 struct A_CmdComp_ {
     // implementar...
 };
@@ -114,6 +135,11 @@ A_lstIdent A_LstIdent(String id, A_lstIdent lstIdent);
 A_dec A_DecVar(String id, String tipo);
 A_lstDecVar A_LstDecVar(A_dec decVar, A_lstDecVar lstDecVar);
 A_lstDecVar concatLstDecVar(A_lstDecVar lst1, A_lstDecVar lst2);
+A_funcDec A_FuncDec(String id, A_lstDecVar parametros, String returnTipo, A_bloco bloco);
+A_lstDecFunc A_LstFuncDec(A_funcDec funcDec, A_lstDecFunc lstFuncDec);
+A_procDec A_ProcDec(String id, A_lstDecVar parametros, A_bloco bloco);
+A_lstDecProc A_LstProcDec(A_procDec procDec, A_lstDecProc lstProcDec);
+A_lstDecSub A_LstSubDec(A_lstDecFunc lstFuncDec, A_lstDecProc lstProcDec);
 A_exp A_OpExp(A_oper oper, A_exp left, A_exp right);
 
 #endif /* AST_H */

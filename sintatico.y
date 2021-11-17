@@ -27,7 +27,7 @@ void yyerror(const char *s) {
   fprintf(stderr, "Erro sintático: %s", s);
 }
 
-extern A_Programa raiz_ast;
+extern A_programa raiz_ast;
 
 %}
 
@@ -41,14 +41,20 @@ extern A_Programa raiz_ast;
    não terminais da gramática. 
 */
 %union {
-   String str;
-   int num;
-   A_Programa programa;
-   A_Bloco bloco;
-   A_LstDecSub secDecVar;
-   A_LstDecVar secDecSub;
-   A_CmdComp cmdComp;
-   A_Exp exp;
+  String str;
+  int num;
+  A_programa programa;
+  A_bloco bloco;
+  A_lstDecVar lstDecVar;
+  A_lstIdent lstIdent;
+  A_lstDecFunc lstDecFunc;
+  A_lstDecProc lstDecProc;
+  A_lstDecSub lstDecSub;
+  A_CmdComp cmdComp;
+  A_exp exp;
+  A_dec dec;
+  A_funcDec funcDec;
+  A_procDec procDec;
 }
 
 /* Os nomes associados aos tokens definidos aqui serão armazenados um uma 
@@ -96,15 +102,25 @@ extern A_Programa raiz_ast;
    https://www.gnu.org/software/bison/manual/html_node/Token-Decl.html
 */
 
+%nonassoc T_THEN T_DO T_FUNCTION T_IDENT
+%nonassoc T_ATRIBUICAO T_ABRE_PARENTESES ELSE T_VIRGULA
+%left T_OR
+%left T_AND
+%nonassoc T_IGUAL T_DIFERENTE T_MENOR_IGUAL T_MENOR T_MAIOR T_MAIOR_IGUAL
+%left T_MAIS T_MENOS
+%left T_MULT T_DIV
+
 %type <programa> programa
-%type <secDecVar> secao_declara_vars
-%type <secDecSub> secao_declara_subrotinas
-%type <cmdComp> comando_composto declara_vars declara_var lista_identificadores declara_proced proced declara_func func parametros_formais parametros declara_parametros comandos comando atribuicao chamada_procedimento condicional repeticao leitura escrita lista_expressoes fator variavel chamada_funcao 
-%type <exp> expressao expressao_simples termo
+%type <lstDecVar> secao_declara_vars lista_declara_vars declara_vars parametros parametros_formais declara_parametros
+%type <lstIdent> lista_ident
+%type <lstDecSub> secao_declara_subs list_declara_subs
+%type <lstDecFunc> list_declara_funcs
+%type <lstDecProc> list_declara_procs
+%type <cmdComp> comando_composto
 %type <bloco> bloco
 %type <str> tipo
-%type <str> logico
-%type <int> T_NUMERO
+%type <procDec> declara_proced
+%type <funcDec> declara_func
 
 %define parse.error verbose
 %define parse.lac full
@@ -113,141 +129,92 @@ extern A_Programa raiz_ast;
 
 %%
 
-programa: T_PROGRAM T_IDENT T_PONTO_E_VIRGULA bloco T_PONTO { raiz_ast = A_programa($2, $4); }
+programa: T_PROGRAM T_IDENT T_PONTO_E_VIRGULA bloco T_PONTO { raiz_ast = A_Programa($2, $4); }
 ;
 
-bloco: secao_declara_vars secao_declara_subrotinas comando_composto { $$ = A_bloco($1, $2, $3); }
+bloco: secao_declara_vars secao_declara_subs comando_composto { $$ = A_Bloco($1, $2, $3); }
 ;
 
-secao_declara_vars: T_VAR declara_vars T_PONTO_E_VIRGULA { $$ = NULL; }
-                  | secao_declara_vars declara_vars T_PONTO_E_VIRGULA { $$ = NULL; }
+secao_declara_vars: T_VAR lista_declara_vars { $$ = $2; }
                   | /* vazio */ { $$ = NULL; }
 ;
 
-declara_vars: declara_vars declara_var { $$ = NULL; }
-            | declara_var { $$ = NULL; }
+lista_declara_vars: declara_vars lista_declara_vars { $$ = concatLstDecVar($1, $2); }
+                  | declara_vars                    { $$ = $1; }
 ;
 
-declara_var: lista_identificadores T_DOIS_PONTOS tipo { $$ = NULL; }
+declara_vars: lista_ident T_DOIS_PONTOS tipo T_PONTO_E_VIRGULA { 
+                                                                  String tipo = $3;
+                                                                  A_lstDecVar lstDecVar = NULL;
+                                                                  A_lstIdent lstIdent = $1;
+                                                                  
+                                                                  while (lstIdent != NULL) {
+                                                                     lstDecVar = A_LstDecVar(A_DecVar(lstIdent->id, tipo), lstDecVar);
+                                                                     lstIdent = lstIdent->prox;
+                                                                  }
+                                                                  
+                                                                  $$ = lstDecVar;
+                                                               }
 ;
 
-lista_identificadores: lista_identificadores T_VIRGULA T_IDENT { $$ = NULL; }
-           | T_IDENT { $$ = NULL; }
+parametros_formais: /* vazio */ { $$ = NULL; }
+                  | parametros { $$ = $1; }
+;
+
+parametros: parametros T_PONTO_E_VIRGULA declara_parametros { $$ = concatLstDecVar($1, $3); }
+          | declara_parametros { $$ = $1; }
+;
+
+declara_parametros: lista_ident T_DOIS_PONTOS tipo { 
+                                                      String tipo = $3;
+                                                      A_lstDecVar lstDecVar = NULL;
+                                                      A_lstIdent lstIdent = $1;
+                                                      
+                                                      while (lstIdent != NULL) {
+                                                          lstDecVar = A_LstDecVar(A_DecVar(lstIdent->id, tipo), lstDecVar);
+                                                          lstIdent = lstIdent->prox;
+                                                      }
+                                                      
+                                                      $$ = lstDecVar;
+                                                    }
+                  | T_VAR lista_ident T_DOIS_PONTOS tipo { $$ = NULL; }
+;
+
+lista_ident: lista_ident T_VIRGULA T_IDENT { $$ = A_LstIdent($3, $1); }
+           | T_IDENT                       { $$ = A_LstIdent($1, NULL); }
 ;
 
 tipo: T_IDENT { $$ = $1; } /* caso não fosse especificada, esta já seria a ação default */
 ;
 
-secao_declara_subrotinas: declara_proced T_PONTO_E_VIRGULA { $$ = NULL; }
-                        | declara_func T_PONTO_E_VIRGULA { $$ = NULL; }
-                        | /* vazio */ { $$ = NULL; }
+secao_declara_subs: list_declara_subs { $$ = $1; }
+                  | /* vazio */ { $$ = NULL; }
 ;
 
-declara_proced: proced T_PONTO_E_VIRGULA bloco { $$ = NULL; }
+list_declara_subs: list_declara_funcs list_declara_procs { $$ = A_LstSubDec($1, $2); }
+                  | list_declara_funcs { $$ = A_LstSubDec($1, NULL); }
+                  | list_declara_procs { $$ = A_LstSubDec(NULL, $1); }
 ;
 
-proced: T_PROCEDURE T_IDENT { $$ = NULL; }
-      | T_PROCEDURE T_IDENT parametros_formais { $$ = NULL; }
+list_declara_funcs: declara_func T_PONTO_E_VIRGULA list_declara_funcs { $$ = A_LstFuncDec($1, $3); }
+                  | declara_func T_PONTO_E_VIRGULA  { $$ = A_LstFuncDec($1, NULL); }
 ;
 
-declara_func: func T_DOIS_PONTOS tipo T_PONTO_E_VIRGULA bloco { $$ = NULL; }
+list_declara_procs: declara_proced T_PONTO_E_VIRGULA list_declara_procs { $$ = A_LstProcDec($1, $3); }
+                  | declara_proced T_PONTO_E_VIRGULA  { $$ = A_LstProcDec($1, NULL); }
 ;
 
-func: T_FUNCTION T_IDENT { $$ = NULL; }
-    | T_FUNCTION T_IDENT parametros_formais { $$ = NULL; }
+declara_proced: T_PROCEDURE T_IDENT T_ABRE_PARENTESES parametros_formais T_FECHA_PARENTESES T_PONTO_E_VIRGULA bloco { $$ = A_ProcDec($2, $4, $7); }
 ;
 
-parametros_formais: T_ABRE_PARENTESES parametros T_FECHA_PARENTESES { $$ = NULL; }
+declara_func: T_FUNCTION T_IDENT T_ABRE_PARENTESES parametros_formais T_FECHA_PARENTESES T_DOIS_PONTOS tipo T_PONTO_E_VIRGULA bloco { $$ = A_FuncDec($2, $4, $7, $9); }
 ;
 
-parametros: parametros T_PONTO_E_VIRGULA declara_parametros { $$ = NULL; }
-          | declara_parametros { $$ = NULL; }
+comando_composto: T_BEGIN comandos T_END /* implementar ação */ { $$ = NULL; }
 ;
 
-declara_parametros: lista_identificadores T_DOIS_PONTOS tipo { $$ = NULL; }
-                  | T_VAR lista_identificadores T_DOIS_PONTOS tipo { $$ = NULL; }
+comandos: 
 ;
-
-comando_composto: T_BEGIN comandos T_END { $$ = NULL; }
-;
-
-comandos: comandos T_PONTO_E_VIRGULA comando { $$ = NULL; }
-        | comando { $$ = NULL; }
-;
-
-comando: atribuicao { $$ = NULL; }
-        | chamada_procedimento { $$ = NULL; }
-        | condicional { $$ = NULL; }
-        | repeticao { $$ = NULL; }
-        | leitura { $$ = NULL; }
-        | escrita { $$ = NULL; }
-        | comando_composto { $$ = NULL; }
-;
-
-atribuicao: T_IDENT T_ATRIBUICAO expressao { $$ = A_atribExp($1, $3); }
-;
-
-chamada_procedimento: T_IDENT { $$ = NULL; }
-                    | T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = NULL; }
-;
-
-condicional: T_IF expressao T_THEN comando { $$ = NULL; }
-          | T_IF expressao T_THEN comando T_ELSE comando { $$ = NULL; }
-;
-
-repeticao: T_WHILE expressao T_DO comando { $$ = NULL; }
-;
-
-leitura: T_READ T_ABRE_PARENTESES lista_identificadores T_FECHA_PARENTESES { $$ = NULL; }
-;
-
-escrita: T_WRITE T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = NULL; }
-;
-
-lista_expressoes: lista_expressoes T_VIRGULA expressao { $$ = NULL; }
-                | expressao { $$ = NULL; }
-;
-
-expressao: expressao_simples { $$ = $1; }
-        | expressao_simples T_IGUAL expressao_simples { $$ = A_opExp($1, A_eqOp, $3); }
-        | expressao_simples T_DIFERENTE expressao_simples { $$ = A_opExp($1, A_neqOp, $3); }
-        | expressao_simples T_MENOR expressao_simples { $$ = A_opExp($1, A_ltOp, $3); }
-        | expressao_simples T_MENOR_IGUAL expressao_simples { $$ = A_opExp($1, A_leOp, $3); }
-        | expressao_simples T_MAIOR expressao_simples { $$ = A_opExp($1, A_gtOp, $3); }
-        | expressao_simples T_MAIOR_IGUAL expressao_simples { $$ = A_opExp($1, A_geOp, $3); }
-;
-
-expressao_simples: expressao_simples T_MAIS termo { $$ =  A_opExp($1, A_somaOp, $3); }
-                | expressao_simples T_MENOS termo { $$ =  A_opExp($1, A_subOp, $3); }
-                | expressao_simples T_OR termo { $$ =  A_opExp($1, A_orOp, $3); }
-                | termo { $$ = $1; }
-;
-
-termo: termo T_MULT fator { $$ = A_opExp($1, A_multOp, $3); }
-    | termo T_DIV fator { $$ = A_opExp($1, A_divOp, $3); }
-    | termo T_AND fator { $$ = A_opExp($1, A_andOp, $3); }
-    | fator { $$ = $1; }
-;
-
-fator: variavel { $$ = $1; }
-      | T_NUMERO { $$ = $1; }
-      | logico { $$ = NULL; }
-      | chamada_funcao { $$ = NULL; }
-      | T_ABRE_PARENTESES expressao T_FECHA_PARENTESES { $$ = NULL; }
-      | T_NOT fator { $$ = NULL; }
-      | T_MENOS fator { $$ = NULL; }
-;
-
-variavel: T_IDENT { $$ = $1; }
-;
-
-logico: T_FALSE { $$ = "false"; }
-      | T_TRUE { $$ = "true"; }
-;
-
-chamada_funcao: T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = NULL; }
-;
-
 %%
 
 /* Aqui poderia ser construída a função main com a lógica do compilador, que
