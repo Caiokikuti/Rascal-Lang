@@ -124,7 +124,7 @@ extern A_programa raiz_ast;
 %type <procDec> declara_proced
 %type <funcDec> declara_func
 %type <var> variavel
-%type <exp> expressao expressao_simples termo fator chamada_func chamada_proc atribuicao comando
+%type <exp> expressao expressao_simples termo fator chamada_func chamada_proc atribuicao comando logico
 %type <lstExp> lista_expressoes comandos comando_composto 
 
 %define parse.error verbose
@@ -278,18 +278,18 @@ termo: fator { $$ = $1; }
 fator: variavel { $$ = A_VarExp($1); }
       | T_NUMERO { $$ = A_IntExp($1); }
       | chamada_func { $$ = $1; }
+      | logico { $$ = $1; }
       // | T_ABRE_PARENTESES expressao T_FECHA_PARENTESES { $$ = NULL; }
       // | T_NOT fator { $$ = NULL; }
       // | T_MENOS fator { $$ = NULL; }
-      // | logico { $$ = $1; }
 ;
 
 variavel: T_IDENT { $$ = A_Var($1); }
 ;
 
-// logico: T_TRUE { $$ = A_BoolExp($1); }
-//       | T_FALSE { $$ = A_BoolExp($1); }
-// ;
+logico: T_TRUE { $$ = A_BoolExp(A_true); }
+      | T_FALSE { $$ = A_BoolExp(A_false); }
+;
 
 chamada_func: T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_ChamaFuncExp($1, $3); }
 ;

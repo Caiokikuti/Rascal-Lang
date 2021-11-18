@@ -34,6 +34,11 @@ typedef enum {
   A_andOp
 } A_oper;
 
+typedef enum {
+  A_false = 0,
+  A_true = 1,
+} A_bool;
+
 struct A_Dec_ {
   enum {
     A_varDec,
@@ -121,7 +126,7 @@ struct A_Exp_ {
   union {
     int intExp;
     String strExp;
-    String boolExp;
+    A_bool boolExp;
     A_var var;
     struct {
       A_oper oper;
@@ -175,7 +180,7 @@ A_exp A_VarExp(A_var var);
 A_exp A_OpExp(A_oper oper, A_exp left, A_exp right);
 A_exp A_IntExp(int i);
 A_exp A_StrExp(String s);
-A_exp A_BoolExp(String booll);
+A_exp A_BoolExp(A_bool booll);
 A_exp A_IfExp(A_exp test, A_exp then, A_exp elsee);
 A_exp A_WhileExp(A_exp test, A_exp body);
 A_exp A_AtribExp(A_var var, A_exp exp);

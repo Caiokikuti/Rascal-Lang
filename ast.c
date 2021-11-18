@@ -112,7 +112,7 @@ A_exp A_StrExp(String s) {
   return p;
 }
 
-A_exp A_BoolExp(String booll) {
+A_exp A_BoolExp(A_bool booll) {
   A_exp p = malloc(sizeof(*p));
   p->tipo = A_boolExp;
   p->u.boolExp = booll;
