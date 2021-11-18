@@ -119,6 +119,8 @@ struct A_Exp_ {
 		A_atribExp,
 		A_chamaFuncExp,
 		A_chamaProcExp,
+    A_leituraExp,
+    A_escritaExp,
 		A_ifExp,
 		A_whileExp,
     A_varExp,
@@ -128,6 +130,8 @@ struct A_Exp_ {
     String strExp;
     A_bool boolExp;
     A_var var;
+    A_lstIdent leituraExp;
+    A_lstExp escritaExp;
     struct {
       A_oper oper;
       A_exp esquerda;
@@ -184,6 +188,8 @@ A_exp A_BoolExp(A_bool booll);
 A_exp A_IfExp(A_exp test, A_exp then, A_exp elsee);
 A_exp A_WhileExp(A_exp test, A_exp body);
 A_exp A_AtribExp(A_var var, A_exp exp);
+A_exp A_LeituraExp(A_lstIdent lstIdent);
+A_exp A_EscritaExp(A_lstExp lstExp);
 A_exp A_ChamaFuncExp(String func, A_lstExp args);
 A_exp A_ChamaProcExp(String func, A_lstExp args);
 A_lstExp A_LstExp(A_exp exp, A_lstExp lstExp);

@@ -124,7 +124,7 @@ extern A_programa raiz_ast;
 %type <procDec> declara_proced
 %type <funcDec> declara_func
 %type <var> variavel
-%type <exp> expressao expressao_simples termo fator chamada_func chamada_proc atribuicao comando logico
+%type <exp> expressao expressao_simples termo fator chamada_func chamada_proc atribuicao comando logico leitura escrita
 %type <lstExp> lista_expressoes comandos comando_composto 
 
 %define parse.error verbose
@@ -224,11 +224,11 @@ comandos: comando T_PONTO_E_VIRGULA { $$ = A_LstExp($1, NULL); }
 
 comando: atribuicao { $$ = $1; }
         | chamada_proc { $$ = $1; }
+        | leitura { $$ = $1; }
+        | escrita { $$ = $1; }
 ;
         // | if { $$ = NULL; }
         // | while { $$ = NULL; }
-        // | leitura { $$ = NULL; }
-        // | escrita { $$ = NULL; }
 
 atribuicao: T_IDENT T_ATRIBUICAO expressao { $$ = A_AtribExp(A_Var($1), $3); }
 ;
@@ -243,11 +243,11 @@ chamada_proc: T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$
 // while: T_WHILE expressao T_DO comando { $$ = NULL; }
 // ;
 
-// leitura: T_READ T_ABRE_PARENTESES lista_ident T_FECHA_PARENTESES { $$ = NULL; }
-// ;
+leitura: T_READ T_ABRE_PARENTESES lista_ident T_FECHA_PARENTESES { $$ = A_LeituraExp($3); }
+;
 
-// escrita: T_WRITE T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = NULL; }
-// ;
+escrita: T_WRITE T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_EscritaExp($3); }
+;
 
 lista_expressoes: expressao { $$ = A_LstExp($1, NULL); }
                 | lista_expressoes T_VIRGULA expressao { $$ = A_LstExp($3, $1); }

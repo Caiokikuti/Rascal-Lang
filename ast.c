@@ -119,6 +119,20 @@ A_exp A_BoolExp(A_bool booll) {
   return p;
 }
 
+A_exp A_LeituraExp(A_lstIdent lstIdent){
+  A_exp p = malloc(sizeof(*p));
+  p->tipo = A_leituraExp;
+  p->u.leituraExp = lstIdent;
+  return p;
+}
+
+A_exp A_EscritaExp(A_lstExp lstExp){
+  A_exp p = malloc(sizeof(*p));
+  p->tipo = A_escritaExp;
+  p->u.escritaExp = lstExp;
+  return p;
+}
+
 A_exp A_ChamaFuncExp(String func, A_lstExp args) {
   A_exp p = malloc(sizeof(*p));
   p->tipo = A_chamaFuncExp;
