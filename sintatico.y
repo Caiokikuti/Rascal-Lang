@@ -52,7 +52,9 @@ extern A_programa raiz_ast;
   A_lstDecSub lstDecSub;
   A_CmdComp cmdComp;
   A_exp exp;
+  A_lstExp lstExp;
   A_dec dec;
+  A_var var;
   A_funcDec funcDec;
   A_procDec procDec;
 }
@@ -77,10 +79,10 @@ extern A_programa raiz_ast;
 %token T_VAR
 %token T_ABRE_PARENTESES T_FECHA_PARENTESES
 %token T_ATRIBUICAO
-%token T_NUMERO
 %token T_VIRGULA T_PONTO_E_VIRGULA T_DOIS_PONTOS T_PONTO
 
 %token <str> T_IDENT 
+%token <num> T_NUMERO 
 /* str é o nome do campo semântico que será utilizado pelo token T_IDENT (identificador).
    Este campo foi definido na union acima e seu objetivo é armazenar uma
    string (char *), que no nosso caso será o valor semântido do identificador
@@ -116,11 +118,14 @@ extern A_programa raiz_ast;
 %type <lstDecSub> secao_declara_subs list_declara_subs
 %type <lstDecFunc> list_declara_funcs
 %type <lstDecProc> list_declara_procs
-%type <cmdComp> comando_composto
+// %type <cmdComp> comando_composto
 %type <bloco> bloco
 %type <str> tipo
 %type <procDec> declara_proced
 %type <funcDec> declara_func
+%type <var> variavel
+%type <exp> expressao expressao_simples termo fator chamada_func chamada_proc atribuicao comando
+%type <lstExp> lista_expressoes comandos comando_composto 
 
 %define parse.error verbose
 %define parse.lac full
@@ -184,7 +189,7 @@ lista_ident: lista_ident T_VIRGULA T_IDENT { $$ = A_LstIdent($3, $1); }
            | T_IDENT                       { $$ = A_LstIdent($1, NULL); }
 ;
 
-tipo: T_IDENT { $$ = $1; } /* caso não fosse especificada, esta já seria a ação default */
+tipo: T_IDENT { $$ = $1; }
 ;
 
 secao_declara_subs: list_declara_subs { $$ = $1; }
@@ -210,11 +215,85 @@ declara_proced: T_PROCEDURE T_IDENT T_ABRE_PARENTESES parametros_formais T_FECHA
 declara_func: T_FUNCTION T_IDENT T_ABRE_PARENTESES parametros_formais T_FECHA_PARENTESES T_DOIS_PONTOS tipo T_PONTO_E_VIRGULA bloco { $$ = A_FuncDec($2, $4, $7, $9); }
 ;
 
-comando_composto: T_BEGIN comandos T_END /* implementar ação */ { $$ = NULL; }
+comando_composto: T_BEGIN comandos T_END { $$ = $2; }
 ;
 
-comandos: 
+comandos: comando T_PONTO_E_VIRGULA { $$ = A_LstExp($1, NULL); }
+        | comando T_PONTO_E_VIRGULA comandos { $$ = A_LstExp($1, $3); }
 ;
+
+comando: atribuicao { $$ = $1; }
+        | chamada_proc { $$ = $1; }
+;
+        // | if { $$ = NULL; }
+        // | while { $$ = NULL; }
+        // | leitura { $$ = NULL; }
+        // | escrita { $$ = NULL; }
+
+atribuicao: T_IDENT T_ATRIBUICAO expressao { $$ = A_AtribExp(A_Var($1), $3); }
+;
+
+chamada_proc: T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_ChamaProcExp($1, $3); }
+;
+
+// if: T_IF expressao T_THEN comando { $$ = NULL; }
+//   | T_IF expressao T_THEN comando T_ELSE comando { $$ = NULL; }
+// ;
+
+// while: T_WHILE expressao T_DO comando { $$ = NULL; }
+// ;
+
+// leitura: T_READ T_ABRE_PARENTESES lista_ident T_FECHA_PARENTESES { $$ = NULL; }
+// ;
+
+// escrita: T_WRITE T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = NULL; }
+// ;
+
+lista_expressoes: expressao { $$ = A_LstExp($1, NULL); }
+                | lista_expressoes T_VIRGULA expressao { $$ = A_LstExp($3, $1); }
+                | /* vazio */ { $$ = NULL; }
+;
+
+expressao: expressao_simples { $$ = $1; }
+          | expressao_simples T_IGUAL expressao_simples { $$ = A_OpExp(A_eqOp, $1, $3); }
+          | expressao_simples T_DIFERENTE expressao_simples { $$ = A_OpExp(A_neqOp, $1, $3); }
+          | expressao_simples T_MENOR expressao_simples { $$ = A_OpExp(A_ltOp, $1, $3); }
+          | expressao_simples T_MENOR_IGUAL expressao_simples { $$ = A_OpExp(A_leOp, $1, $3); }
+          | expressao_simples T_MAIOR expressao_simples { $$ = A_OpExp(A_gtOp, $1, $3); }
+          | expressao_simples T_MAIOR_IGUAL expressao_simples { $$ = A_OpExp(A_geOp, $1, $3); }
+;
+
+expressao_simples: termo { $$ = $1; }
+                  | termo T_MAIS termo { $$ = A_OpExp(A_somaOp, $1, $3); }
+                  | termo T_MENOS termo { $$ = A_OpExp(A_subOp, $1, $3); }
+                  | termo T_OR termo { $$ = A_OpExp(A_orOp, $1, $3); }
+;
+
+termo: fator { $$ = $1; }
+      | fator T_MULT fator { $$ = A_OpExp(A_multOp, $1, $3); }
+      | fator T_DIV fator { $$ = A_OpExp(A_divOp, $1, $3); }
+      | fator T_AND fator { $$ = A_OpExp(A_andOp, $1, $3); }
+;
+
+fator: variavel { $$ = A_VarExp($1); }
+      | T_NUMERO { $$ = A_IntExp($1); }
+      | chamada_func { $$ = $1; }
+      // | T_ABRE_PARENTESES expressao T_FECHA_PARENTESES { $$ = NULL; }
+      // | T_NOT fator { $$ = NULL; }
+      // | T_MENOS fator { $$ = NULL; }
+      // | logico { $$ = $1; }
+;
+
+variavel: T_IDENT { $$ = A_Var($1); }
+;
+
+// logico: T_TRUE { $$ = A_BoolExp($1); }
+//       | T_FALSE { $$ = A_BoolExp($1); }
+// ;
+
+chamada_func: T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_ChamaFuncExp($1, $3); }
+;
+
 %%
 
 /* Aqui poderia ser construída a função main com a lógica do compilador, que

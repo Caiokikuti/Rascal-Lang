@@ -2,6 +2,7 @@
 #define AST_H
 
 #include "util.h"
+#include "ast.h"
 
 typedef struct A_Programa_ *A_programa;
 typedef struct A_Bloco_ *A_bloco;
@@ -13,6 +14,7 @@ typedef struct A_LstIdent_ *A_lstIdent;
 typedef struct A_LstDecVar_ *A_lstDecVar;
 typedef struct A_LstDecFunc_ *A_lstDecFunc;
 typedef struct A_LstDecSub_ *A_lstDecSub;
+typedef struct A_LstExp_ *A_lstExp;
 typedef struct A_FuncDec_ *A_funcDec;
 typedef struct A_ProcDec_ *A_procDec;
 typedef struct A_LstDecProc_ *A_lstDecProc;
@@ -90,7 +92,8 @@ struct A_Programa_ {
 struct A_Bloco_ {
     A_lstDecSub secDecSub;
     A_lstDecVar secDecVar;
-    A_CmdComp cmdComp;
+    A_lstExp cmdComp;
+    // A_CmdComp cmdComp;
 };
 
 struct A_Var_ {
@@ -105,9 +108,21 @@ struct A_LstIdent_ {
 struct A_Exp_ {
   enum {
     A_opExp,
+    A_intExp,
+    A_strExp,
+    A_boolExp,
+		A_atribExp,
+		A_chamaFuncExp,
+		A_chamaProcExp,
+		A_ifExp,
+		A_whileExp,
+    A_varExp,
   } tipo;
   union {
     int intExp;
+    String strExp;
+    String boolExp;
+    A_var var;
     struct {
       A_oper oper;
       A_exp esquerda;
@@ -119,10 +134,24 @@ struct A_Exp_ {
     } atrib;
     struct {
       String func;
-      
-    } chama;
-    
+      A_lstExp lstExp;
+    } chama_func;
+    struct {
+      String proc;
+      A_lstExp lstExp;
+    } chama_proc;
+		struct {
+			A_exp test, then, elsee;
+		} iff;
+		struct {
+			A_exp test, body;
+		} whilee;
   } u;
+};
+
+struct A_LstExp_ {
+  A_exp exp;
+  A_lstExp lstExp;
 };
 
 struct A_CmdComp_ {
@@ -130,7 +159,8 @@ struct A_CmdComp_ {
 };
 
 A_programa A_Programa(String id, A_bloco bloco);
-A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_CmdComp cmdComp);
+// A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_CmdComp cmdComp);
+A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_lstExp cmdComp);
 A_lstIdent A_LstIdent(String id, A_lstIdent lstIdent);
 A_dec A_DecVar(String id, String tipo);
 A_lstDecVar A_LstDecVar(A_dec decVar, A_lstDecVar lstDecVar);
@@ -140,6 +170,18 @@ A_lstDecFunc A_LstFuncDec(A_funcDec funcDec, A_lstDecFunc lstFuncDec);
 A_procDec A_ProcDec(String id, A_lstDecVar parametros, A_bloco bloco);
 A_lstDecProc A_LstProcDec(A_procDec procDec, A_lstDecProc lstProcDec);
 A_lstDecSub A_LstSubDec(A_lstDecFunc lstFuncDec, A_lstDecProc lstProcDec);
+A_var A_Var(String id);
+A_exp A_VarExp(A_var var);
 A_exp A_OpExp(A_oper oper, A_exp left, A_exp right);
+A_exp A_IntExp(int i);
+A_exp A_StrExp(String s);
+A_exp A_BoolExp(String booll);
+A_exp A_IfExp(A_exp test, A_exp then, A_exp elsee);
+A_exp A_WhileExp(A_exp test, A_exp body);
+A_exp A_AtribExp(A_var var, A_exp exp);
+A_exp A_ChamaFuncExp(String func, A_lstExp args);
+A_exp A_ChamaProcExp(String func, A_lstExp args);
+A_lstExp A_LstExp(A_exp exp, A_lstExp lstExp);
+A_lstExp concatLstExp(A_lstExp lstExp1, A_lstExp lstExp2);
 
 #endif /* AST_H */

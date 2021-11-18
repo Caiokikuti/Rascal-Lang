@@ -7,8 +7,8 @@ A_programa A_Programa(String id, A_bloco bloco) {
   programa->bloco = bloco;
   return programa;
 }
-
-A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_CmdComp cmdComp) {
+// A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_CmdComp cmdComp) {
+A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_lstExp cmdComp) {
   A_bloco bloco = malloc(sizeof(*bloco));
   bloco->secDecSub = secDecSub;
   bloco->secDecVar = secDecVar;
@@ -83,4 +83,106 @@ A_lstDecSub A_LstSubDec(A_lstDecFunc lstFuncDec, A_lstDecProc lstProcDec) {
   lstDecSub->lstDecFunc = lstFuncDec;
   lstDecSub->lstDecProc = lstProcDec;
   return lstDecSub;
+}
+
+A_var A_Var(String id) {
+  A_var p = malloc(sizeof(*p));
+  p->id = id;
+  return p;
+}
+
+A_exp A_VarExp(A_var var) {
+	A_exp p = checked_malloc(sizeof(*p));
+	p->tipo = A_varExp;
+	p->u.var = var;
+	return p;
+}
+
+A_exp A_IntExp(int i) {
+  A_exp p = malloc(sizeof(*p));
+  p->tipo = A_intExp;
+  p->u.intExp = i;
+  return p;
+}
+
+A_exp A_StrExp(String s) {
+  A_exp p = malloc(sizeof(*p));
+  p->tipo = A_strExp;
+  p->u.strExp = s;
+  return p;
+}
+
+A_exp A_BoolExp(String booll) {
+  A_exp p = malloc(sizeof(*p));
+  p->tipo = A_boolExp;
+  p->u.boolExp = booll;
+  return p;
+}
+
+A_exp A_ChamaFuncExp(String func, A_lstExp args) {
+  A_exp p = malloc(sizeof(*p));
+  p->tipo = A_chamaFuncExp;
+  p->u.chama_func.func = func;
+  p->u.chama_func.lstExp = args;
+  return p;
+}
+
+A_exp A_ChamaProcExp(String proc, A_lstExp args) {
+  A_exp p = malloc(sizeof(*p));
+  p->tipo = A_chamaProcExp;
+  p->u.chama_proc.proc = proc;
+  p->u.chama_proc.lstExp = args;
+  return p;
+}
+
+A_exp A_OpExp(A_oper oper, A_exp left, A_exp right) {
+	A_exp p = checked_malloc(sizeof(*p));
+	p->tipo = A_opExp;
+	p->u.op.oper = oper;
+	p->u.op.esquerda = left;
+	p->u.op.direita = right;
+	return p;
+}
+
+A_exp A_AtribExp(A_var var, A_exp exp) {
+  A_exp p = checked_malloc(sizeof(*p));
+	p->tipo = A_atribExp;
+	p->u.atrib.var = var;
+	p->u.atrib.exp = exp;
+	return p;
+}
+
+A_exp A_IfExp(A_exp test, A_exp then, A_exp elsee) {
+  A_exp p = checked_malloc(sizeof(*p));
+	p->tipo = A_ifExp;
+	p->u.iff.test = test;
+	p->u.iff.then = then;
+	p->u.iff.elsee = elsee;
+	return p;
+}
+
+A_exp A_WhileExp(A_exp test, A_exp body) {
+  A_exp p = checked_malloc(sizeof(*p));
+	p->tipo = A_whileExp;
+	p->u.whilee.test = test;
+	p->u.whilee.body = body;
+	return p;
+}
+
+A_lstExp A_LstExp(A_exp exp, A_lstExp lstExp) {
+  A_lstExp p = checked_malloc(sizeof(*p));
+	p->exp = exp;
+	p->lstExp = lstExp;
+	return p;
+}
+
+A_lstExp concatLstExp(A_lstExp lstExp1, A_lstExp lstExp2) {
+  A_lstExp lstConcat = lstExp1;
+  if (lstExp1 != NULL) {
+    while (lstExp1->lstExp != NULL) {
+        lstExp1 = lstExp1->lstExp;
+    }
+    lstExp1->lstExp = lstExp2;
+  }
+  return lstConcat;
 }
