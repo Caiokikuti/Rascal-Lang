@@ -104,13 +104,8 @@ extern A_programa raiz_ast;
    https://www.gnu.org/software/bison/manual/html_node/Token-Decl.html
 */
 
-%nonassoc T_THEN T_DO T_FUNCTION T_IDENT
-%nonassoc T_ATRIBUICAO T_ABRE_PARENTESES ELSE T_VIRGULA
-%left T_OR
-%left T_AND
-%nonassoc T_IGUAL T_DIFERENTE T_MENOR_IGUAL T_MENOR T_MAIOR T_MAIOR_IGUAL
-%left T_MAIS T_MENOS
-%left T_MULT T_DIV
+%nonassoc T_THEN
+%nonassoc T_ELSE
 
 %type <programa> programa
 %type <lstDecVar> secao_declara_vars lista_declara_vars declara_vars parametros parametros_formais declara_parametros
@@ -124,7 +119,7 @@ extern A_programa raiz_ast;
 %type <procDec> declara_proced
 %type <funcDec> declara_func
 %type <var> variavel
-%type <exp> expressao expressao_simples termo fator chamada_func chamada_proc atribuicao comando logico leitura escrita
+%type <exp> expressao expressao_simples termo fator chamada_func chamada_proc atribuicao comando logico leitura escrita if while
 %type <lstExp> lista_expressoes comandos comando_composto 
 
 %define parse.error verbose
@@ -226,9 +221,10 @@ comando: atribuicao { $$ = $1; }
         | chamada_proc { $$ = $1; }
         | leitura { $$ = $1; }
         | escrita { $$ = $1; }
+        | if { $$ = $1; }
+        | while { $$ = $1; }
+        // | comando_composto { $$ = $1; }
 ;
-        // | if { $$ = NULL; }
-        // | while { $$ = NULL; }
 
 atribuicao: T_IDENT T_ATRIBUICAO expressao { $$ = A_AtribExp(A_Var($1), $3); }
 ;
@@ -236,12 +232,12 @@ atribuicao: T_IDENT T_ATRIBUICAO expressao { $$ = A_AtribExp(A_Var($1), $3); }
 chamada_proc: T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_ChamaProcExp($1, $3); }
 ;
 
-// if: T_IF expressao T_THEN comando { $$ = NULL; }
-//   | T_IF expressao T_THEN comando T_ELSE comando { $$ = NULL; }
-// ;
+if: T_IF expressao T_THEN comando %prec T_THEN { $$ = A_IfExp($2, $4, NULL); }
+  | T_IF expressao T_THEN comando T_ELSE comando { $$ = A_IfExp($2, $4, $6); }
+;
 
-// while: T_WHILE expressao T_DO comando { $$ = NULL; }
-// ;
+while: T_WHILE expressao T_DO comando { $$ = A_WhileExp($2, $4); }
+;
 
 leitura: T_READ T_ABRE_PARENTESES lista_ident T_FECHA_PARENTESES { $$ = A_LeituraExp($3); }
 ;
@@ -279,7 +275,7 @@ fator: variavel { $$ = A_VarExp($1); }
       | T_NUMERO { $$ = A_IntExp($1); }
       | chamada_func { $$ = $1; }
       | logico { $$ = $1; }
-      // | T_ABRE_PARENTESES expressao T_FECHA_PARENTESES { $$ = NULL; }
+      | T_ABRE_PARENTESES expressao T_FECHA_PARENTESES { $$ = $2; }
       // | T_NOT fator { $$ = NULL; }
       // | T_MENOS fator { $$ = NULL; }
 ;
