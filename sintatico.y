@@ -250,24 +250,24 @@ lista_expressoes: expressao { $$ = A_LstExp($1, NULL); }
 ;
 
 expressao: expressao_simples { $$ = $1; }
-          | expressao_simples T_IGUAL expressao_simples { $$ = A_OpExp(A_eqOp, $1, $3); }
-          | expressao_simples T_DIFERENTE expressao_simples { $$ = A_OpExp(A_neqOp, $1, $3); }
-          | expressao_simples T_MENOR expressao_simples { $$ = A_OpExp(A_ltOp, $1, $3); }
-          | expressao_simples T_MENOR_IGUAL expressao_simples { $$ = A_OpExp(A_leOp, $1, $3); }
-          | expressao_simples T_MAIOR expressao_simples { $$ = A_OpExp(A_gtOp, $1, $3); }
-          | expressao_simples T_MAIOR_IGUAL expressao_simples { $$ = A_OpExp(A_geOp, $1, $3); }
+          | expressao_simples T_IGUAL expressao { $$ = A_OpExp(A_eqOp, $1, $3); }
+          | expressao_simples T_DIFERENTE expressao { $$ = A_OpExp(A_neqOp, $1, $3); }
+          | expressao_simples T_MENOR expressao { $$ = A_OpExp(A_ltOp, $1, $3); }
+          | expressao_simples T_MENOR_IGUAL expressao { $$ = A_OpExp(A_leOp, $1, $3); }
+          | expressao_simples T_MAIOR expressao { $$ = A_OpExp(A_gtOp, $1, $3); }
+          | expressao_simples T_MAIOR_IGUAL expressao { $$ = A_OpExp(A_geOp, $1, $3); }
 ;
 
 expressao_simples: termo { $$ = $1; }
-                  | termo T_MAIS termo { $$ = A_OpExp(A_somaOp, $1, $3); }
-                  | termo T_MENOS termo { $$ = A_OpExp(A_subOp, $1, $3); }
-                  | termo T_OR termo { $$ = A_OpExp(A_orOp, $1, $3); }
+                  | termo T_MAIS expressao_simples { $$ = A_OpExp(A_somaOp, $1, $3); }
+                  | termo T_MENOS expressao_simples { $$ = A_OpExp(A_subOp, $1, $3); }
+                  | termo T_OR expressao_simples { $$ = A_OpExp(A_orOp, $1, $3); }
 ;
 
 termo: fator { $$ = $1; }
-      | fator T_MULT fator { $$ = A_OpExp(A_multOp, $1, $3); }
-      | fator T_DIV fator { $$ = A_OpExp(A_divOp, $1, $3); }
-      | fator T_AND fator { $$ = A_OpExp(A_andOp, $1, $3); }
+      | termo T_MULT fator { $$ = A_OpExp(A_multOp, $1, $3); }
+      | termo T_DIV fator { $$ = A_OpExp(A_divOp, $1, $3); }
+      | termo T_AND fator { $$ = A_OpExp(A_andOp, $1, $3); }
 ;
 
 fator: variavel { $$ = A_VarExp($1); }
@@ -275,8 +275,8 @@ fator: variavel { $$ = A_VarExp($1); }
       | chamada_func { $$ = $1; }
       | logico { $$ = $1; }
       | T_ABRE_PARENTESES expressao T_FECHA_PARENTESES { $$ = $2; }
-      // | T_NOT fator { $$ = NULL; }
-      // | T_MENOS fator { $$ = NULL; }
+      | T_MENOS fator { $$ = A_OpExp(A_subOp, A_IntExp(0), $2); }
+      | T_NOT fator { $$ = A_IfExp($2, A_BoolExp(A_false), A_BoolExp(A_true)); }
 ;
 
 variavel: T_IDENT { $$ = A_Var($1); }
