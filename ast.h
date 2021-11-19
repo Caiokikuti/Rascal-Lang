@@ -6,7 +6,6 @@
 
 typedef struct A_Programa_ *A_programa;
 typedef struct A_Bloco_ *A_bloco;
-typedef struct A_CmdComp *A_CmdComp;
 typedef struct A_Exp_ *A_exp;
 typedef struct A_Var_ *A_var;
 typedef struct A_Dec_ *A_dec;
@@ -97,8 +96,7 @@ struct A_Programa_ {
 struct A_Bloco_ {
     A_lstDecSub secDecSub;
     A_lstDecVar secDecVar;
-    A_lstExp cmdComp;
-    // A_CmdComp cmdComp;
+    A_exp cmdComp;
 };
 
 struct A_Var_ {
@@ -124,6 +122,7 @@ struct A_Exp_ {
 		A_ifExp,
 		A_whileExp,
     A_varExp,
+    A_cmdComp
   } tipo;
   union {
     int intExp;
@@ -155,6 +154,9 @@ struct A_Exp_ {
 		struct {
 			A_exp test, body;
 		} whilee;
+    struct {
+      A_lstExp lstCmd;
+    }cmd_cmp;
   } u;
 };
 
@@ -163,13 +165,8 @@ struct A_LstExp_ {
   A_lstExp lstExp;
 };
 
-struct A_CmdComp_ {
-    // implementar...
-};
-
 A_programa A_Programa(String id, A_bloco bloco);
-// A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_CmdComp cmdComp);
-A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_lstExp cmdComp);
+A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_exp cmdComp);
 A_lstIdent A_LstIdent(String id, A_lstIdent lstIdent);
 A_dec A_DecVar(String id, String tipo);
 A_lstDecVar A_LstDecVar(A_dec decVar, A_lstDecVar lstDecVar);
@@ -192,6 +189,7 @@ A_exp A_LeituraExp(A_lstIdent lstIdent);
 A_exp A_EscritaExp(A_lstExp lstExp);
 A_exp A_ChamaFuncExp(String func, A_lstExp args);
 A_exp A_ChamaProcExp(String func, A_lstExp args);
+A_exp A_CmdCompExp(A_lstExp lstCmd);
 A_lstExp A_LstExp(A_exp exp, A_lstExp lstExp);
 A_lstExp concatLstExp(A_lstExp lstExp1, A_lstExp lstExp2);
 

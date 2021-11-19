@@ -7,13 +7,19 @@ A_programa A_Programa(String id, A_bloco bloco) {
   programa->bloco = bloco;
   return programa;
 }
-// A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_CmdComp cmdComp) {
-A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_lstExp cmdComp) {
+A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_exp cmdComp) {
   A_bloco bloco = malloc(sizeof(*bloco));
   bloco->secDecSub = secDecSub;
   bloco->secDecVar = secDecVar;
   bloco->cmdComp = cmdComp;
   return bloco;
+}
+
+A_exp A_CmdCompExp(A_lstExp lstCmd) {
+  A_exp p = malloc(sizeof(*p));
+  p->tipo = A_cmdComp;
+  p->u.cmd_cmp.lstCmd = lstCmd;
+  return p;
 }
 
 A_lstIdent A_LstIdent(String id, A_lstIdent lstIdent) {

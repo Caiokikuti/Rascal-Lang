@@ -50,7 +50,6 @@ extern A_programa raiz_ast;
   A_lstDecFunc lstDecFunc;
   A_lstDecProc lstDecProc;
   A_lstDecSub lstDecSub;
-  A_CmdComp cmdComp;
   A_exp exp;
   A_lstExp lstExp;
   A_dec dec;
@@ -119,8 +118,8 @@ extern A_programa raiz_ast;
 %type <procDec> declara_proced
 %type <funcDec> declara_func
 %type <var> variavel
-%type <exp> expressao expressao_simples termo fator chamada_func chamada_proc atribuicao comando logico leitura escrita if while
-%type <lstExp> lista_expressoes comandos comando_composto 
+%type <exp> comando_composto expressao expressao_simples termo fator chamada_func chamada_proc atribuicao comando logico leitura escrita if while
+%type <lstExp> lista_expressoes comandos 
 
 %define parse.error verbose
 %define parse.lac full
@@ -210,7 +209,7 @@ declara_proced: T_PROCEDURE T_IDENT T_ABRE_PARENTESES parametros_formais T_FECHA
 declara_func: T_FUNCTION T_IDENT T_ABRE_PARENTESES parametros_formais T_FECHA_PARENTESES T_DOIS_PONTOS tipo T_PONTO_E_VIRGULA bloco { $$ = A_FuncDec($2, $4, $7, $9); }
 ;
 
-comando_composto: T_BEGIN comandos T_END { $$ = $2; }
+comando_composto: T_BEGIN comandos T_END { $$ = A_CmdCompExp($2); }
 ;
 
 comandos: comando T_PONTO_E_VIRGULA { $$ = A_LstExp($1, NULL); }
@@ -223,7 +222,7 @@ comando: atribuicao { $$ = $1; }
         | escrita { $$ = $1; }
         | if { $$ = $1; }
         | while { $$ = $1; }
-        // | comando_composto { $$ = $1; }
+        | comando_composto { $$ = $1; }
 ;
 
 atribuicao: T_IDENT T_ATRIBUICAO expressao { $$ = A_AtribExp(A_Var($1), $3); }
