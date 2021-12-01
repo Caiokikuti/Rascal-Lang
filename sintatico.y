@@ -10,6 +10,8 @@
 #include <string.h>
 #include "includes/util.h"
 #include "includes/ast.h"
+#include "includes/symbol.h"
+#include "includes/errormsg.h"
 
 /* Esta é a função que opera o Analisador Léxico (AL) e já foi construída pelo Flex
    dentro dele. Como o Analisador Sintático (AS) é quem irá chamá-la no decorrer da análise, 
@@ -24,7 +26,7 @@ int yylex(void);
    para controlar as mensagens de erro também seja interessante.
 */
 void yyerror(const char *s) {
-  fprintf(stderr, "Erro sintático: %s", s);
+  	EM_error(EM_tokPos, "%s", s);
 }
 
 extern A_programa raiz_ast;
@@ -43,6 +45,7 @@ extern A_programa raiz_ast;
 %union {
   String str;
   int num;
+  S_symbol sym;
   A_programa programa;
   A_bloco bloco;
   A_lstDecVar lstDecVar;
@@ -52,7 +55,7 @@ extern A_programa raiz_ast;
   A_lstDecSub lstDecSub;
   A_exp exp;
   A_lstExp lstExp;
-  A_dec dec;
+  A_decVar decVar;
   A_var var;
   A_funcDec funcDec;
   A_procDec procDec;
@@ -114,7 +117,7 @@ extern A_programa raiz_ast;
 %type <lstDecProc> list_declara_procs
 // %type <cmdComp> comando_composto
 %type <bloco> bloco
-%type <str> tipo
+%type <sym> tipo
 %type <procDec> declara_proced
 %type <funcDec> declara_func
 %type <var> variavel
@@ -128,7 +131,7 @@ extern A_programa raiz_ast;
 
 %%
 
-programa: T_PROGRAM T_IDENT T_PONTO_E_VIRGULA bloco T_PONTO { raiz_ast = A_Programa($2, $4); }
+programa: T_PROGRAM T_IDENT T_PONTO_E_VIRGULA bloco T_PONTO { raiz_ast = A_Programa(S_Symbol($2), $4); }
 ;
 
 bloco: secao_declara_vars secao_declara_subs comando_composto { $$ = A_Bloco($1, $2, $3); }
@@ -143,12 +146,12 @@ lista_declara_vars: declara_vars lista_declara_vars { $$ = concatLstDecVar($1, $
 ;
 
 declara_vars: lista_ident T_DOIS_PONTOS tipo T_PONTO_E_VIRGULA { 
-                                                                  String tipo = $3;
+                                                                  S_symbol tipo = $3;
                                                                   A_lstDecVar lstDecVar = NULL;
                                                                   A_lstIdent lstIdent = $1;
                                                                   
                                                                   while (lstIdent != NULL) {
-                                                                     lstDecVar = A_LstDecVar(A_DecVar(lstIdent->id, tipo), lstDecVar);
+                                                                     lstDecVar = A_LstDecVar(A_DecVar(EM_tokPos, lstIdent->id, tipo), lstDecVar);
                                                                      lstIdent = lstIdent->prox;
                                                                   }
                                                                   
@@ -165,12 +168,12 @@ parametros: parametros T_PONTO_E_VIRGULA declara_parametros { $$ = concatLstDecV
 ;
 
 declara_parametros: lista_ident T_DOIS_PONTOS tipo { 
-                                                      String tipo = $3;
+                                                      S_symbol tipo = $3;
                                                       A_lstDecVar lstDecVar = NULL;
                                                       A_lstIdent lstIdent = $1;
                                                       
                                                       while (lstIdent != NULL) {
-                                                          lstDecVar = A_LstDecVar(A_DecVar(lstIdent->id, tipo), lstDecVar);
+                                                          lstDecVar = A_LstDecVar(A_DecVar(EM_tokPos, lstIdent->id, tipo), lstDecVar);
                                                           lstIdent = lstIdent->prox;
                                                       }
                                                       
@@ -179,11 +182,11 @@ declara_parametros: lista_ident T_DOIS_PONTOS tipo {
                   | T_VAR lista_ident T_DOIS_PONTOS tipo { $$ = NULL; }
 ;
 
-lista_ident: lista_ident T_VIRGULA T_IDENT { $$ = A_LstIdent($3, $1); }
-           | T_IDENT                       { $$ = A_LstIdent($1, NULL); }
+lista_ident: lista_ident T_VIRGULA T_IDENT { $$ = A_LstIdent(S_Symbol($3), $1); }
+           | T_IDENT                       { $$ = A_LstIdent(S_Symbol($1), NULL); }
 ;
 
-tipo: T_IDENT { $$ = $1; }
+tipo: T_IDENT { $$ = S_Symbol($1); }
 ;
 
 secao_declara_subs: list_declara_subs { $$ = $1; }
@@ -203,10 +206,10 @@ list_declara_procs: declara_proced T_PONTO_E_VIRGULA list_declara_procs { $$ = A
                   | declara_proced T_PONTO_E_VIRGULA  { $$ = A_LstProcDec($1, NULL); }
 ;
 
-declara_proced: T_PROCEDURE T_IDENT T_ABRE_PARENTESES parametros_formais T_FECHA_PARENTESES T_PONTO_E_VIRGULA bloco { $$ = A_ProcDec($2, $4, $7); }
+declara_proced: T_PROCEDURE T_IDENT T_ABRE_PARENTESES parametros_formais T_FECHA_PARENTESES T_PONTO_E_VIRGULA bloco { $$ = A_ProcDec(EM_tokPos, S_Symbol($2), $4, $7); }
 ;
 
-declara_func: T_FUNCTION T_IDENT T_ABRE_PARENTESES parametros_formais T_FECHA_PARENTESES T_DOIS_PONTOS tipo T_PONTO_E_VIRGULA bloco { $$ = A_FuncDec($2, $4, $7, $9); }
+declara_func: T_FUNCTION T_IDENT T_ABRE_PARENTESES parametros_formais T_FECHA_PARENTESES T_DOIS_PONTOS tipo T_PONTO_E_VIRGULA bloco { $$ = A_FuncDec(EM_tokPos, S_Symbol($2), $4, $7, $9); }
 ;
 
 comando_composto: T_BEGIN comandos T_END { $$ = A_CmdCompExp($2); }
@@ -225,23 +228,23 @@ comando: atribuicao { $$ = $1; }
         | comando_composto { $$ = $1; }
 ;
 
-atribuicao: T_IDENT T_ATRIBUICAO expressao { $$ = A_AtribExp(A_Var($1), $3); }
+atribuicao: T_IDENT T_ATRIBUICAO expressao { $$ = A_AtribExp(EM_tokPos, A_Var(EM_tokPos, S_Symbol($1)), $3); }
 ;
 
-chamada_proc: T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_ChamaProcExp($1, $3); }
+chamada_proc: T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_ChamaProcExp(EM_tokPos, S_Symbol($1), $3); }
 ;
 
-if: T_IF expressao T_THEN comando %prec T_THEN { $$ = A_IfExp($2, $4, NULL); }
-  | T_IF expressao T_THEN comando T_ELSE comando { $$ = A_IfExp($2, $4, $6); }
+if: T_IF expressao T_THEN comando %prec T_THEN { $$ = A_IfExp(EM_tokPos, $2, $4, NULL); }
+  | T_IF expressao T_THEN comando T_ELSE comando { $$ = A_IfExp(EM_tokPos, $2, $4, $6); }
 ;
 
-while: T_WHILE expressao T_DO comando { $$ = A_WhileExp($2, $4); }
+while: T_WHILE expressao T_DO comando { $$ = A_WhileExp(EM_tokPos, $2, $4); }
 ;
 
-leitura: T_READ T_ABRE_PARENTESES lista_ident T_FECHA_PARENTESES { $$ = A_LeituraExp($3); }
+leitura: T_READ T_ABRE_PARENTESES lista_ident T_FECHA_PARENTESES { $$ = A_LeituraExp(EM_tokPos, $3); }
 ;
 
-escrita: T_WRITE T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_EscritaExp($3); }
+escrita: T_WRITE T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_EscritaExp(EM_tokPos, $3); }
 ;
 
 lista_expressoes: expressao { $$ = A_LstExp($1, NULL); }
@@ -250,43 +253,43 @@ lista_expressoes: expressao { $$ = A_LstExp($1, NULL); }
 ;
 
 expressao: expressao_simples { $$ = $1; }
-          | expressao_simples T_IGUAL expressao { $$ = A_OpExp(A_eqOp, $1, $3); }
-          | expressao_simples T_DIFERENTE expressao { $$ = A_OpExp(A_neqOp, $1, $3); }
-          | expressao_simples T_MENOR expressao { $$ = A_OpExp(A_ltOp, $1, $3); }
-          | expressao_simples T_MENOR_IGUAL expressao { $$ = A_OpExp(A_leOp, $1, $3); }
-          | expressao_simples T_MAIOR expressao { $$ = A_OpExp(A_gtOp, $1, $3); }
-          | expressao_simples T_MAIOR_IGUAL expressao { $$ = A_OpExp(A_geOp, $1, $3); }
+          | expressao_simples T_IGUAL expressao { $$ = A_OpExp(EM_tokPos, A_eqOp, $1, $3); }
+          | expressao_simples T_DIFERENTE expressao { $$ = A_OpExp(EM_tokPos, A_neqOp, $1, $3); }
+          | expressao_simples T_MENOR expressao { $$ = A_OpExp(EM_tokPos, A_ltOp, $1, $3); }
+          | expressao_simples T_MENOR_IGUAL expressao { $$ = A_OpExp(EM_tokPos, A_leOp, $1, $3); }
+          | expressao_simples T_MAIOR expressao { $$ = A_OpExp(EM_tokPos, A_gtOp, $1, $3); }
+          | expressao_simples T_MAIOR_IGUAL expressao { $$ = A_OpExp(EM_tokPos, A_geOp, $1, $3); }
 ;
 
 expressao_simples: termo { $$ = $1; }
-                  | termo T_MAIS expressao_simples { $$ = A_OpExp(A_somaOp, $1, $3); }
-                  | termo T_MENOS expressao_simples { $$ = A_OpExp(A_subOp, $1, $3); }
-                  | termo T_OR expressao_simples { $$ = A_OpExp(A_orOp, $1, $3); }
+                  | termo T_MAIS expressao_simples { $$ = A_OpExp(EM_tokPos, A_somaOp, $1, $3); }
+                  | termo T_MENOS expressao_simples { $$ = A_OpExp(EM_tokPos, A_subOp, $1, $3); }
+                  | termo T_OR expressao_simples { $$ = A_OpExp(EM_tokPos, A_orOp, $1, $3); }
 ;
 
 termo: fator { $$ = $1; }
-      | termo T_MULT fator { $$ = A_OpExp(A_multOp, $1, $3); }
-      | termo T_DIV fator { $$ = A_OpExp(A_divOp, $1, $3); }
-      | termo T_AND fator { $$ = A_OpExp(A_andOp, $1, $3); }
+      | termo T_MULT fator { $$ = A_OpExp(EM_tokPos, A_multOp, $1, $3); }
+      | termo T_DIV fator { $$ = A_OpExp(EM_tokPos, A_divOp, $1, $3); }
+      | termo T_AND fator { $$ = A_OpExp(EM_tokPos, A_andOp, $1, $3); }
 ;
 
-fator: variavel { $$ = A_VarExp($1); }
-      | T_NUMERO { $$ = A_IntExp($1); }
+fator: variavel { $$ = A_VarExp(EM_tokPos, $1); }
+      | T_NUMERO { $$ = A_IntExp(EM_tokPos, $1); }
       | chamada_func { $$ = $1; }
       | logico { $$ = $1; }
       | T_ABRE_PARENTESES expressao T_FECHA_PARENTESES { $$ = $2; }
-      | T_MENOS fator { $$ = A_OpExp(A_subOp, A_IntExp(0), $2); }
-      | T_NOT fator { $$ = A_IfExp($2, A_BoolExp(A_false), A_BoolExp(A_true)); }
+      | T_MENOS fator { $$ = A_OpExp(EM_tokPos, A_subOp, A_IntExp(EM_tokPos, 0), $2); }
+      | T_NOT fator { $$ = A_IfExp(EM_tokPos, $2, A_BoolExp(EM_tokPos, A_false), A_BoolExp(EM_tokPos, A_true)); }
 ;
 
-variavel: T_IDENT { $$ = A_Var($1); }
+variavel: T_IDENT { $$ = A_Var(EM_tokPos, S_Symbol($1)); }
 ;
 
-logico: T_TRUE { $$ = A_BoolExp(A_true); }
-      | T_FALSE { $$ = A_BoolExp(A_false); }
+logico: T_TRUE { $$ = A_BoolExp(EM_tokPos, A_true); }
+      | T_FALSE { $$ = A_BoolExp(EM_tokPos, A_false); }
 ;
 
-chamada_func: T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_ChamaFuncExp($1, $3); }
+chamada_func: T_IDENT T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_ChamaFuncExp(EM_tokPos, S_Symbol($1), $3); }
 ;
 
 %%

@@ -26,7 +26,7 @@
 
 CFLAGS = -g
 
-compilador: compilador.c sintatico.tab.c lexico.yy.c ast.c util.c errormsg.c symbol.c table.c
+compilador: compilador.c sintatico.tab.c lexico.yy.c ast.c util.c errormsg.c symbol.c table.c env.c translate.c types.c semant.c
 
 sintatico.tab.c sintatico.tab.h: sintatico.y
 	bison -Werror -tvd -r all sintatico.y

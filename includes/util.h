@@ -1,8 +1,10 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <stdbool.h>
 #include <assert.h>
+#include <stddef.h>
+
+typedef char bool;
 
 #define TRUE 1
 #define FALSE 0

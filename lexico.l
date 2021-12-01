@@ -70,7 +70,7 @@ numero [0-9]+
 {numero}                        { ajustaPosicao();  yylval.num = atoi(yytext); return T_NUMERO; }
 
 {branco}                        { ajustaPosicao(); }
-{pulo_linha}                    { ajustaPosicao(); nl++; }
+{pulo_linha}                    { ajustaPosicao(); EM_newline(); nl++; }
 
 "//"                            { ajustaPosicao(); BEGIN(INLINE_COMENTARIO); }
 <INLINE_COMENTARIO>{pulo_linha} { ajustaPosicao(); nl++; BEGIN(INITIAL); }

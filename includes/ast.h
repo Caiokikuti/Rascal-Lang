@@ -3,12 +3,15 @@
 
 #include "util.h"
 #include "ast.h"
+#include "symbol.h"
+
+typedef int A_pos;
 
 typedef struct A_Programa_ *A_programa;
 typedef struct A_Bloco_ *A_bloco;
 typedef struct A_Exp_ *A_exp;
 typedef struct A_Var_ *A_var;
-typedef struct A_Dec_ *A_dec;
+typedef struct A_DecVar_ *A_decVar;
 typedef struct A_LstIdent_ *A_lstIdent;
 typedef struct A_LstDecVar_ *A_lstDecVar;
 typedef struct A_LstDecFunc_ *A_lstDecFunc;
@@ -38,32 +41,22 @@ typedef enum {
   A_true = 1,
 } A_bool;
 
-struct A_Dec_ {
-  enum {
-    A_varDec,
-    A_functionDec,
-    A_procedureDec,
-    A_typeDec
-  } tipo;
-  union {
-    A_funcDec func;
-    A_procDec proc;
-    struct {
-      String id;
-      String tipo;
-    } var;
-  } u;
+struct A_DecVar_ {
+  A_pos pos;
+  S_symbol id;
+  S_symbol tipo;
 };
 
 struct A_LstDecVar_ {
-  A_dec decVar;
+  A_decVar decVar;
   A_lstDecVar prox;
 };
 
 struct A_FuncDec_ {
-	String id;
+  A_pos pos;
+	S_symbol id;
 	A_lstDecVar params;
-	String returnType;
+	S_symbol returnType;
 	A_bloco bloco;
 };
 
@@ -73,7 +66,8 @@ struct A_LstDecFunc_ {
 };
 
 struct A_ProcDec_ {
-	String id;
+  A_pos pos;
+	S_symbol id;
 	A_lstDecVar params;
 	A_bloco bloco;
 };
@@ -89,22 +83,23 @@ struct A_LstDecSub_ {
 };
 
 struct A_Programa_ {
-    String id;
-    A_bloco bloco;
+  S_symbol id;
+  A_bloco bloco;
 };
 
 struct A_Bloco_ {
-    A_lstDecSub secDecSub;
-    A_lstDecVar secDecVar;
-    A_exp cmdComp;
+  A_lstDecSub secDecSub;
+  A_lstDecVar secDecVar;
+  A_exp cmdComp;
 };
 
 struct A_Var_ {
-  String id;
+  S_symbol id;
+  A_pos pos;
 };
 
 struct A_LstIdent_ {
-  String id;
+  S_symbol id;
   A_lstIdent prox;
 };
 
@@ -112,7 +107,6 @@ struct A_Exp_ {
   enum {
     A_opExp,
     A_intExp,
-    A_strExp,
     A_boolExp,
 		A_atribExp,
 		A_chamaFuncExp,
@@ -124,9 +118,10 @@ struct A_Exp_ {
     A_varExp,
     A_cmdComp
   } tipo;
+  A_pos pos;
   union {
     int intExp;
-    String strExp;
+    S_symbol strExp;
     A_bool boolExp;
     A_var var;
     A_lstIdent leituraExp;
@@ -141,11 +136,11 @@ struct A_Exp_ {
       A_exp exp;
     } atrib;
     struct {
-      String func;
+      S_symbol func;
       A_lstExp lstExp;
     } chama_func;
     struct {
-      String proc;
+      S_symbol proc;
       A_lstExp lstExp;
     } chama_proc;
 		struct {
@@ -165,31 +160,30 @@ struct A_LstExp_ {
   A_lstExp lstExp;
 };
 
-A_programa A_Programa(String id, A_bloco bloco);
+A_programa A_Programa(S_symbol id, A_bloco bloco);
 A_bloco A_Bloco(A_lstDecVar secDecVar, A_lstDecSub secDecSub, A_exp cmdComp);
-A_lstIdent A_LstIdent(String id, A_lstIdent lstIdent);
-A_dec A_DecVar(String id, String tipo);
-A_lstDecVar A_LstDecVar(A_dec decVar, A_lstDecVar lstDecVar);
-A_lstDecVar concatLstDecVar(A_lstDecVar lst1, A_lstDecVar lst2);
-A_funcDec A_FuncDec(String id, A_lstDecVar parametros, String returnTipo, A_bloco bloco);
-A_lstDecFunc A_LstFuncDec(A_funcDec funcDec, A_lstDecFunc lstFuncDec);
-A_procDec A_ProcDec(String id, A_lstDecVar parametros, A_bloco bloco);
-A_lstDecProc A_LstProcDec(A_procDec procDec, A_lstDecProc lstProcDec);
 A_lstDecSub A_LstSubDec(A_lstDecFunc lstFuncDec, A_lstDecProc lstProcDec);
-A_var A_Var(String id);
-A_exp A_VarExp(A_var var);
-A_exp A_OpExp(A_oper oper, A_exp left, A_exp right);
-A_exp A_IntExp(int i);
-A_exp A_StrExp(String s);
-A_exp A_BoolExp(A_bool booll);
-A_exp A_IfExp(A_exp test, A_exp then, A_exp elsee);
-A_exp A_WhileExp(A_exp test, A_exp body);
-A_exp A_AtribExp(A_var var, A_exp exp);
-A_exp A_LeituraExp(A_lstIdent lstIdent);
-A_exp A_EscritaExp(A_lstExp lstExp);
-A_exp A_ChamaFuncExp(String func, A_lstExp args);
-A_exp A_ChamaProcExp(String func, A_lstExp args);
+A_lstDecVar A_LstDecVar(A_decVar decVar, A_lstDecVar lstDecVar);
+A_lstIdent A_LstIdent(S_symbol id, A_lstIdent lstIdent);
+A_decVar A_DecVar(A_pos pos, S_symbol id, S_symbol tipo);
+A_lstDecVar concatLstDecVar(A_lstDecVar lst1, A_lstDecVar lst2);
+A_funcDec A_FuncDec(A_pos pos, S_symbol id, A_lstDecVar parametros, S_symbol returnTipo, A_bloco bloco);
+A_lstDecFunc A_LstFuncDec(A_funcDec funcDec, A_lstDecFunc lstFuncDec);
+A_procDec A_ProcDec(A_pos pos, S_symbol id, A_lstDecVar parametros, A_bloco bloco);
+A_lstDecProc A_LstProcDec(A_procDec procDec, A_lstDecProc lstProcDec);
 A_exp A_CmdCompExp(A_lstExp lstCmd);
+A_var A_Var(A_pos pos, S_symbol id);
+A_exp A_VarExp(A_pos pos, A_var var);
+A_exp A_OpExp(A_pos pos, A_oper oper, A_exp left, A_exp right);
+A_exp A_IntExp(A_pos pos, int i);
+A_exp A_BoolExp(A_pos pos, A_bool booll);
+A_exp A_IfExp(A_pos pos, A_exp test, A_exp then, A_exp elsee);
+A_exp A_WhileExp(A_pos pos, A_exp test, A_exp body);
+A_exp A_AtribExp(A_pos pos, A_var var, A_exp exp);
+A_exp A_LeituraExp(A_pos pos, A_lstIdent lstIdent);
+A_exp A_EscritaExp(A_pos pos, A_lstExp lstExp);
+A_exp A_ChamaFuncExp(A_pos pos, S_symbol func, A_lstExp args);
+A_exp A_ChamaProcExp(A_pos pos, S_symbol func, A_lstExp args);
 A_lstExp A_LstExp(A_exp exp, A_lstExp lstExp);
 A_lstExp concatLstExp(A_lstExp lstExp1, A_lstExp lstExp2);
 
