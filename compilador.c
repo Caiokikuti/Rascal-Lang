@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "ast.h"
+#include "includes/ast.h"
 #include "sintatico.tab.h"
 
 A_programa raiz_ast;

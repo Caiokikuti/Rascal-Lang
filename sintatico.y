@@ -1,6 +1,6 @@
 %code requires {
-#include "util.h"
-#include "ast.h"
+#include "includes/util.h"
+#include "includes/ast.h"
 }
 
 %{
@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "util.h"
-#include "ast.h"
+#include "includes/util.h"
+#include "includes/ast.h"
 
 /* Esta é a função que opera o Analisador Léxico (AL) e já foi construída pelo Flex
    dentro dele. Como o Analisador Sintático (AS) é quem irá chamá-la no decorrer da análise, 

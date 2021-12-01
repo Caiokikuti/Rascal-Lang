@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include "util.h"
-#include "errormsg.h"
-#include "tokens.h"
+#include "includes/util.h"
+#include "includes/errormsg.h"
+#include "includes/tokens.h"
 
 int yylex(void); /* prototype for the lexing function */
 

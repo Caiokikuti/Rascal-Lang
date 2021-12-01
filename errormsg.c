@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "util.h"
-#include "errormsg.h"
+#include "includes/util.h"
+#include "includes/errormsg.h"
 
 
 bool anyErrors= FALSE;

@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "ast.h"
+#include "includes/ast.h"
 
 A_programa A_Programa(String id, A_bloco bloco) {
   A_programa programa = malloc(sizeof(*programa));
