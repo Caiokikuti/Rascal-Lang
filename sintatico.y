@@ -179,7 +179,16 @@ declara_parametros: lista_ident T_DOIS_PONTOS tipo {
                                                       
                                                       $$ = lstDecVar;
                                                     }
-                  | T_VAR lista_ident T_DOIS_PONTOS tipo { $$ = NULL; }
+                  | T_VAR lista_ident T_DOIS_PONTOS tipo { S_symbol tipo = $4;
+                                                      A_lstDecVar lstDecVar = NULL;
+                                                      A_lstIdent lstIdent = $2;
+                                                      
+                                                      while (lstIdent != NULL) {
+                                                          lstDecVar = A_LstDecVar(A_DecVar(EM_tokPos, lstIdent->id, tipo), lstDecVar);
+                                                          lstIdent = lstIdent->prox;
+                                                      }
+                                                      
+                                                      $$ = lstDecVar; }
 ;
 
 lista_ident: lista_ident T_VIRGULA T_IDENT { $$ = A_LstIdent(S_Symbol($3), $1); }
@@ -248,7 +257,7 @@ escrita: T_WRITE T_ABRE_PARENTESES lista_expressoes T_FECHA_PARENTESES { $$ = A_
 ;
 
 lista_expressoes: expressao { $$ = A_LstExp($1, NULL); }
-                | lista_expressoes T_VIRGULA expressao { $$ = A_LstExp($3, $1); }
+                | expressao T_VIRGULA lista_expressoes { $$ = A_LstExp($1, $3); }
                 | /* vazio */ { $$ = NULL; }
 ;
 
