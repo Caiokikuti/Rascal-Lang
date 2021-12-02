@@ -9,7 +9,7 @@ struct expty {
 	Ty_ty ty;
 };
 
-void SEM_transProg(A_programa programa);
+void SEMANT_tradProg(A_programa programa);
 
 struct expty tradExp(Escopo escopo, S_table venv, S_table tenv, A_exp exp);
 struct expty tradVar(Escopo escopo, S_table venv, S_table tenv, A_var var);

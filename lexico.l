@@ -14,8 +14,6 @@
     #define IMPRIME(nome) {};
   #endif
 
-  int nl = 1;
-
   int posicaoAtual = 1;
 %}
 
@@ -70,17 +68,17 @@ numero [0-9]+
 {numero}                        { ajustaPosicao();  yylval.num = atoi(yytext); return T_NUMERO; }
 
 {branco}                        { ajustaPosicao(); }
-{pulo_linha}                    { ajustaPosicao(); EM_newline(); nl++; }
+{pulo_linha}                    { ajustaPosicao(); EM_newline(); }
 
 "//"                            { ajustaPosicao(); BEGIN(INLINE_COMENTARIO); }
-<INLINE_COMENTARIO>{pulo_linha} { ajustaPosicao(); nl++; BEGIN(INITIAL); }
+<INLINE_COMENTARIO>{pulo_linha} { ajustaPosicao(); EM_newline(); BEGIN(INITIAL); }
 <INLINE_COMENTARIO>.            { ajustaPosicao(); continue; }
 
 "{"                             { ajustaPosicao(); BEGIN(COMENTARIO); }
 <COMENTARIO><<EOF>>             { ajustaPosicao(); fprintf(stderr, "Comentario nao fechado\n"); yyterminate(); }
 <COMENTARIO>"}"                 { ajustaPosicao(); BEGIN(INITIAL); }
+<COMENTARIO>{pulo_linha}        { ajustaPosicao(); EM_newline(); continue; }
 <COMENTARIO>.                   { ajustaPosicao(); continue; }
-<COMENTARIO>{pulo_linha}        { ajustaPosicao(); nl++; }
 
 .                               { ajustaPosicao(); fprintf(stderr, "Erro: Token ilegal: '%s'\n", yytext); }
 %%

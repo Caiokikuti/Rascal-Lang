@@ -49,7 +49,7 @@ static Ty_tyList makeFormalTys(S_table tenv, A_lstDecVar params)
 	return paramTys;
 }
 
-void SEM_transProg(A_programa programa) {
+void SEMANT_tradProg(A_programa programa) {
 	S_table tenv = E_base_tenv();
 	S_table venv = E_base_venv();
 	struct expty expr = tradBloco(Tr_global(), venv, tenv, programa->bloco);
@@ -84,7 +84,7 @@ struct expty tradBloco(Escopo escopo, S_table venv, S_table tenv, A_bloco bloco)
     exp = tradExp(escopo, venv, tenv, listaExp->exp);
     Tr_ExpList_prepend(list, exp.exp);
   }
-
+  return exp;
 }
 
 struct expty tradExp(Escopo escopo, S_table venv, S_table tenv, A_exp exp) {
@@ -135,7 +135,7 @@ struct expty tradExp(Escopo escopo, S_table venv, S_table tenv, A_exp exp) {
 						}
 					}
 					// return expTy(translation, Ty_Int());
-					return expTy(NULL, Ty_Int());
+					return expTy(NULL, Ty_Bool());
 
 				case A_gtOp:
 				case A_ltOp:
@@ -155,7 +155,7 @@ struct expty tradExp(Escopo escopo, S_table venv, S_table tenv, A_exp exp) {
 						}
 					}
 					// return expTy(translation, Ty_Int());
-					return expTy(NULL, Ty_Int());
+					return expTy(NULL, Ty_Bool());
 				}
 			}
 			assert(0 && "Invalid operator in expression");
@@ -195,6 +195,7 @@ struct expty tradExp(Escopo escopo, S_table venv, S_table tenv, A_exp exp) {
 		}
 
 		case A_atribExp: {
+      E_enventry x = S_look(venv, exp->u.atrib.var->id);
 			struct expty var = tradVar(escopo, venv, tenv, exp->u.atrib.var);
 			struct expty newExp = tradExp(escopo, venv, tenv, exp->u.atrib.exp);
 			
@@ -203,6 +204,8 @@ struct expty tradExp(Escopo escopo, S_table venv, S_table tenv, A_exp exp) {
 						Ty_ToString(var.ty));
 
 			// return expTy(Tr_atribExp(var.exp, newExp.exp), Ty_Void());
+      if (x && x->tipo == E_funcEntry) return expTy(NULL, newExp.ty);
+      
 			return expTy(NULL, Ty_Void());
 		}
 
@@ -217,6 +220,8 @@ struct expty tradVar(Escopo escopo, S_table venv, S_table tenv, A_var var) {
     // translation = Tr_simpleVar(x->u.var.escopo, escopo);
     // return expTy(translation, x->u.var.ty);
     return expTy(NULL, x->u.var.varTipo);
+  } else if (x && x->tipo == E_funcEntry) {
+    return expTy(NULL, x->u.func.returnTipo);
   } else {
     EM_error(var->pos, "Variavel indefinida %s", S_name(var->id));
     // return expTy(translation, Ty_Int());
@@ -255,12 +260,14 @@ Tr_exp tradDecFunc(Escopo escopo, S_table venv, S_table tenv, A_lstDecFunc dec) 
       resultTy = S_look(tenv, funList->funcDec->returnType);
       if (!resultTy)
         EM_error(funList->funcDec->pos, "Tipo do retorno invalido");
+    } else {
+        EM_error(funList->funcDec->pos, "Tipo do retorno indefinido");
     }
     if (!resultTy) resultTy = Ty_Void();
 
     formalTys = makeFormalTys(tenv, funList->funcDec->params);
     Escopo funEscopo = local;
-    S_enter(venv, funList->funcDec->id, E_FuncEntry(funEscopo, dec->funcDec->id, formalTys, resultTy));
+    S_enter(venv, funList->funcDec->id, E_FuncEntry(funEscopo, funList->funcDec->id, formalTys, resultTy));
   }
 
   E_enventry funEntry = NULL;
@@ -273,12 +280,13 @@ Tr_exp tradDecFunc(Escopo escopo, S_table venv, S_table tenv, A_lstDecFunc dec) 
     for (parametros = funList->funcDec->params; parametros; 
       parametros = parametros->prox,
       paramTys = paramTys->tail) {
-      S_enter(venv, parametros->decVar->tipo, E_VarEntry(local, parametros->decVar->id, paramTys->head));
+      S_enter(venv, parametros->decVar->id, E_VarEntry(local, parametros->decVar->id, paramTys->head));
     }
 
-    struct expty e = tradExp(funEntry->u.func.escopo, venv, tenv, funList->funcDec->bloco->cmdComp);
+    // struct expty e = tradExp(funEntry->u.func.escopo, venv, tenv, funList->funcDec->bloco->cmdComp);
+    struct expty e = tradBloco(funEntry->u.func.escopo, venv, tenv, funList->funcDec->bloco);
     if (!is_equal_ty(funEntry->u.func.returnTipo, e.ty))
-      EM_error(funList->funcDec->bloco->cmdComp->pos, "retorno incorreto de tipo %s; esperado %s",
+      EM_error(funList->funcDec->pos, "retorno incorreto de tipo %s; esperado %s",
         Ty_ToString(e.ty), Ty_ToString(funEntry->u.func.returnTipo));
 
     S_endScope(venv);

@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "includes/ast.h"
-#include "sintatico.tab.h"
 #include "includes/semant.h"
+#include "includes/errormsg.h"
+#include "sintatico.tab.h"
 
 A_programa raiz_ast;
 
@@ -31,12 +32,18 @@ int main(int argc, char** argv) {
 
   yyin = fp;
   if (yyparse() == 0) {
-      fprintf(stderr, "\nSintático sucesso!\n");
+      fprintf(stderr, "\nAnálise sintática feita com sucesso!\n");
   } else {
-      fprintf(stderr, "\nAnálise com erros!");
+      fprintf(stderr, "\nAnálise sintática com erros!\n");
   }
 
-  SEM_transProg(raiz_ast);
+  SEMANT_tradProg(raiz_ast);
+
+  if (!EM_anyErrors) {
+    fprintf(stderr, "\nAnálise semântica feita com sucesso!\n");
+  } else {
+    fprintf(stderr, "\nAnálise semântica com erros!\n");
+  }
 
   // raiz_ast está apontando para o nó raiz da AST (programa) caso o parsing foi bem sucedido.
   return EXIT_SUCCESS;

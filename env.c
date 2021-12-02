@@ -3,6 +3,7 @@
 E_enventry E_VarEntry(Escopo escopo, S_symbol id, Ty_ty ty){
 E_enventry varEntry = checked_malloc(sizeof(*varEntry));
 	varEntry->tipo = E_varEntry;
+  varEntry->u.var.id = id;
 	varEntry->u.var.varTipo = ty;
 	varEntry->u.var.escopo = escopo;
 	return varEntry;
