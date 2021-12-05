@@ -88,6 +88,7 @@ void tradBloco(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table ten
       label = newlabel();
       Trad_ExpList_append(listAllExp, Trad_CmdDesvio(DSVS, label));
     }
+    
     if(bloco->secDecSub->lstDecProc) {
       tradDecProc(listAllExp, escopo, venv, tenv, bloco->secDecSub->lstDecProc);
     }
@@ -420,7 +421,6 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 				if (!is_equal_ty(then.ty, elsee.ty)) {
 					EM_error(exp->u.iff.elsee->pos, "Branches do if-then-else devem retornar o mesmo tipo");
         }
-			} else {
 			}
 
       InsertLabel(listAllExp, labelAfterIf, Trad_NoExp());

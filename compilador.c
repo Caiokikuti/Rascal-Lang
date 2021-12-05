@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "includes/ast.h"
 #include "includes/semant.h"
 #include "includes/errormsg.h"
@@ -17,13 +18,26 @@ A_programa raiz_ast;
    $ ./compilador arquivo.ras
 */
 
-string clearFilename (string file) {
-  string fileName = checked_malloc(20);
-  for (int i = 0; file[i] != '.'; i++) { 
-    strncat(fileName, &file[i], 1);
-  }
+static void read_params(int argc, char **argv, string inFile, string outFile) {
+	int param;
 
-  return fileName;
+	while ((param = getopt(argc, argv, "p:s:h")) != -1) {
+		switch(param) {
+			case 'p':
+				strcpy(inFile, optarg);
+			break;
+
+			case 's':
+				strcpy(outFile, optarg);
+			break;
+			
+			case 'h':
+				printf("  -p <nomeArquivoEntrada.ras> -> Nome do programa de entrada.\n");
+				printf("  -s <nomeArquivoSaida> -> Arquivo de saída para o código MEPA.\n");
+				exit(EXIT_SUCCESS);
+			break;
+		}
+	}
 }
 
 int main(int argc, char** argv) {
@@ -31,22 +45,23 @@ int main(int argc, char** argv) {
   FILE* out;
   extern FILE* yyin;
   TRAD_expList listaExp;
+  string inFile = checked_malloc(30);
+  string outFile = checked_malloc(30);
+  strcpy(outFile, "out.MEPA");
 
-  if (argc < 2 || argc > 2) {
-      fprintf(stderr, "Erro: número inválido de parâmetros\n");
-      fprintf(stderr, "Uso: compilador <arquivo>\n");
-      return EXIT_FAILURE;
-  }
-
-  fp = fopen(argv[1], "r");
+  read_params(argc, argv, inFile, outFile);
+  fp = fopen(inFile, "r");
 
   if (fp == NULL) {
-      printf("Erro: não foi possível ler o arquivo '%s'\n", argv[1]);
-      return EXIT_FAILURE;
+    if (strlen(inFile)==0) {
+      printf("Para executar, é necessário no mínimo o nome do arquivo de entrada.\nPara isso, utilize a flag -p <nomeArquivoEntrada.ras>.\n");
+    } else {
+      printf("Erro: não foi possível ler o arquivo de entrada '%s'\n", inFile);
+    }
+    return EXIT_FAILURE;
   }
   
-  string fileOutName = "out.MEPA";
-  out = fopen(fileOutName, "w");
+  out = fopen(outFile, "w");
 
   yyin = fp;
   if (yyparse() == 0) {
@@ -68,7 +83,7 @@ int main(int argc, char** argv) {
   }
 
   geraCodigoMepa(out, listaExp);
-  fprintf(stderr, "\nCódigo MEPA gerado com sucesso!\nNome do arquivo de saída: %s\n", fileOutName);
+  fprintf(stderr, "\nCódigo MEPA gerado com sucesso!\nNome do arquivo de saída: %s\n", outFile);
 
   fclose(out);
 
