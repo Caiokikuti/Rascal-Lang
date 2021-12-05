@@ -580,12 +580,10 @@ TRAD_exp tradDecProc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 
     translation = Trad_InitProc(ENPR, procEscopo);
     InsertLabel(listAllExp, procLabel, translation);
-  }
 
-  E_enventry procEntry = NULL;
-  for (procList = dec; procList; procList = procList->prox) {
+    E_enventry procEntry = S_look(venv, procList->procDec->id);;
     int qntParams = 0;
-    procEntry = S_look(venv, procList->procDec->id);
+
     S_beginScope(venv);
     Ty_tyList paramTys = procEntry->u.proc.parametros;
     A_lstDecVar parametros;
