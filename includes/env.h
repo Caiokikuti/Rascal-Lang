@@ -6,7 +6,11 @@
 #include "symbol.h"
 #include "ast.h"
 #include "types.h"
-#include "translate.h"
+
+typedef enum {
+  global,
+  local
+} Escopo;
 
 typedef struct E_enventry_ *E_enventry;
 
@@ -19,6 +23,7 @@ struct E_enventry_ {
 	union {
 		struct {
       Escopo escopo;
+      int endRelativo;
       S_symbol id;
 			Ty_ty varTipo;
 		} var;
@@ -36,7 +41,7 @@ struct E_enventry_ {
 	} u;
 };
 
-E_enventry E_VarEntry(Escopo escopo, S_symbol id, Ty_ty varTipo);
+E_enventry E_VarEntry(Escopo escopo, int endRelativo, S_symbol id, Ty_ty varTipo);
 E_enventry E_FuncEntry(Escopo escopo, S_symbol label, Ty_tyList parametros, Ty_ty returnTipo);
 E_enventry E_ProcEntry(Escopo escopo, S_symbol label, Ty_tyList parametros);
 

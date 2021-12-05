@@ -1,3 +1,4 @@
+// #include "includes/translate.h"
 #include "includes/translate.h"
 
 Escopo Tr_global() {
@@ -7,7 +8,6 @@ Escopo Tr_global() {
 Escopo Tr_local() {
   return local;
 }
-
 
 Tr_expList Tr_ExpList() {
 	Tr_expList list = checked_malloc(sizeof(*list));

@@ -4,9 +4,9 @@
 #include "includes/symbol.h"
 #include "includes/table.h"
 
-struct S_symbol_ {String name; S_symbol next;};
+struct S_symbol_ {string name; S_symbol next;};
 
-static S_symbol mksymbol(String name, S_symbol next)
+static S_symbol mksymbol(string name, S_symbol next)
 {S_symbol s=checked_malloc(sizeof(*s));
  s->name=name; s->next=next;
  return s;
@@ -23,12 +23,12 @@ static unsigned int hash(char *s0)
  return h;
 }
  
-static int streq(String a, String b)
+static int streq(string a, string b)
 {
  return !strcmp(a,b);
 }
 
-S_symbol S_Symbol(String name)
+S_symbol S_Symbol(string name)
 {int index= hash(name) % SIZE;
  S_symbol syms = hashtable[index], sym;
  for(sym=syms; sym; sym=sym->next)
@@ -38,7 +38,7 @@ S_symbol S_Symbol(String name)
  return sym;
 }
  
-String S_name(S_symbol sym)
+string S_name(S_symbol sym)
 {
  return sym->name;
 }

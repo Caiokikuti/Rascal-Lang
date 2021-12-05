@@ -3,6 +3,7 @@
 #include "includes/ast.h"
 #include "includes/semant.h"
 #include "includes/errormsg.h"
+#include "includes/tradMepa.h"
 #include "sintatico.tab.h"
 
 A_programa raiz_ast;
@@ -17,6 +18,7 @@ A_programa raiz_ast;
 int main(int argc, char** argv) {
   FILE* fp;
   extern FILE* yyin;
+  TRAD_expList listaExp;
 
   if (argc < 2 || argc > 2) {
       fprintf(stderr, "Erro: número inválido de parâmetros\n");
@@ -37,7 +39,7 @@ int main(int argc, char** argv) {
       fprintf(stderr, "\nAnálise sintática com erros!\n");
   }
 
-  SEMANT_tradProg(raiz_ast);
+  listaExp = SEMANT_tradProg(raiz_ast);
 
   if (!EM_anyErrors) {
     fprintf(stderr, "\nAnálise semântica feita com sucesso!\n");

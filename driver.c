@@ -5,7 +5,7 @@
 
 int yylex(void); /* prototype for the lexing function */
 
-String toknames[] = {
+string toknames[] = {
 "T_PROGRAM",
 "T_VAR",
 "T_PROCEDURE",
@@ -46,12 +46,12 @@ String toknames[] = {
 };
 
 
-String tokname(int tok) {
+string tokname(int tok) {
   return tok<1 || tok>37 ? "BAD_TOKEN" : toknames[tok-1];
 }
 
 int main(int argc, char **argv) {
-	String fname; int tok;
+	string fname; int tok;
 
 	if (argc!=2) {fprintf(stderr,"usage: a.out filename\n"); exit(1);}
 	fname=argv[1];

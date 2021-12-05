@@ -43,7 +43,7 @@ extern A_programa raiz_ast;
    não terminais da gramática. 
 */
 %union {
-  String str;
+  string str;
   int num;
   S_symbol sym;
   A_programa programa;
@@ -89,7 +89,7 @@ extern A_programa raiz_ast;
    Este campo foi definido na union acima e seu objetivo é armazenar uma
    string (char *), que no nosso caso será o valor semântido do identificador
    (seu próprio lexema), o qual foi carregado pelo analizador léxico por meio
-   da ação que construimos: yylval.str = String(yytext);
+   da ação que construimos: yylval.str = string(yytext);
    A definição do token T_NUMERO seguirá a mesma ideia, mas seu valor semântico se refere
    ao campo num da union.
 */

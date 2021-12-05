@@ -6,7 +6,7 @@
 
 bool EM_anyErrors = FALSE;
 
-static String fileName = "";
+static string fileName = "";
 
 static int lineNum = 1;
 
@@ -55,7 +55,7 @@ void EM_error(int pos, char *message, ...) {
 	fprintf(stderr, "\n");
 }
 
-void EM_reset(String fname) {
+void EM_reset(string fname) {
 	EM_anyErrors = FALSE;
 	fileName = fname;
 	lineNum = 1;

@@ -49,7 +49,7 @@ enum tokens {
 
 typedef union {
 	int intval;
-	String strval;
+	string strval;
 } Token;
 
 extern Token yylval;

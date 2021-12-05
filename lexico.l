@@ -64,7 +64,7 @@ numero [0-9]+
 ":="                            { ajustaPosicao();  return T_ATRIBUICAO; }
 ":"                             { ajustaPosicao();  return T_DOIS_PONTOS; }
 
-{ident}                         { ajustaPosicao();  yylval.str = string(yytext); return T_IDENT; }
+{ident}                         { ajustaPosicao();  yylval.str = String(yytext); return T_IDENT; }
 {numero}                        { ajustaPosicao();  yylval.num = atoi(yytext); return T_NUMERO; }
 
 {branco}                        { ajustaPosicao(); }

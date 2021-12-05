@@ -9,8 +9,8 @@ typedef char bool;
 #define TRUE 1
 #define FALSE 0
 
-typedef char* String;
+typedef char* string;
 void ajustaPosicao(void);
 void *checked_malloc(int len);
-String string(String);
+string String(string);
 #endif
