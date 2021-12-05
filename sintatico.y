@@ -115,7 +115,6 @@ extern A_programa raiz_ast;
 %type <lstDecSub> secao_declara_subs list_declara_subs
 %type <lstDecFunc> list_declara_funcs
 %type <lstDecProc> list_declara_procs
-// %type <cmdComp> comando_composto
 %type <bloco> bloco
 %type <sym> tipo
 %type <procDec> declara_proced

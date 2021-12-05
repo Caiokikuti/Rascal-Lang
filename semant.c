@@ -3,21 +3,20 @@
 #include "includes/util.h"
 #include "includes/semant.h"
 #include "includes/errormsg.h"
-// #include "includes/translate.h"
 #include "includes/tradMepa.h"
 #include "includes/label.h"
 
-struct expty expTy(TRAD_exp exp, Ty_ty ty) {
+struct expty createExpTy(TRAD_exp exp, Ty_ty ty) {
 	struct expty e;
 	e.exp = exp;
 	e.ty = ty;
 	return e;
 }
 
-int is_equal_ty(Ty_ty actualtType, Ty_ty eType) {
-	int tyKind = actualtType->kind;
-	int eKind = eType->kind;
-	return ((actualtType == eType) || (tyKind == eKind));
+int is_equal_ty(Ty_ty firstType, Ty_ty secondType) {
+	int firstTypeKind = firstType->kind;
+	int secondTypeKind = secondType->kind;
+	return ((firstType == secondType) || (firstTypeKind == secondTypeKind));
 }
 
 static Ty_ty S_look_ty(S_table tenv, S_symbol sym) {
@@ -28,10 +27,10 @@ static Ty_ty S_look_ty(S_table tenv, S_symbol sym) {
 		return NULL;
 }
 
-static Ty_tyList makeFormalTys(S_table tenv, A_lstDecVar params)
+static Ty_tyList makeParamsTipos(S_table tenv, A_lstDecVar params)
 {
-	Ty_tyList paramTys = NULL;
-	Ty_tyList tailList = paramTys;
+	Ty_tyList paramsTipos = NULL;
+	Ty_tyList tailList = paramsTipos;
 	A_lstDecVar paramList;
 	for (paramList = params; paramList; paramList = paramList->prox) {
 		Ty_ty t = S_look_ty(tenv, paramList->decVar->tipo);
@@ -39,16 +38,16 @@ static Ty_tyList makeFormalTys(S_table tenv, A_lstDecVar params)
 			EM_error(paramList->decVar->pos, "Tipo indefinido %s",
 				S_name(paramList->decVar->tipo));
 		} else {
-			if (paramTys) {
+			if (paramsTipos) {
 				tailList->tail = Ty_TyList(t, NULL);
 				tailList = tailList->tail;
 			} else {
-				paramTys = Ty_TyList(t, NULL);
-				tailList = paramTys;
+				paramsTipos = Ty_TyList(t, NULL);
+				tailList = paramsTipos;
 			}
 		}
 	}
-	return paramTys;
+	return paramsTipos;
 }
 
 TRAD_expList SEMANT_tradProg(A_programa programa) {
@@ -77,7 +76,6 @@ void tradBloco(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table ten
   S_beginScope(tenv);
 
   for (listaDecVar = bloco->secDecVar; listaDecVar; listaDecVar = listaDecVar->prox, qntVar++) {
-    // Trad_ExpList_prepend(list, tradDecVar(escopo, &endRelativoVar, venv, tenv, listaDecVar->decVar));
     tradDecVar(listAllExp, escopo, &endRelativoVar, venv, tenv, listaDecVar->decVar);
   }
 
@@ -90,12 +88,10 @@ void tradBloco(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table ten
       Trad_ExpList_append(listAllExp, Trad_CmdDesvio(DSVS, label));
     }
     if(bloco->secDecSub->lstDecProc) {
-      // Trad_ExpList_prepend(list, tradDecProc(escopo, endRelativoSub, venv, tenv, bloco->secDecSub->lstDecProc));
       tradDecProc(listAllExp, escopo, venv, tenv, bloco->secDecSub->lstDecProc);
     }
 
     if (bloco->secDecSub->lstDecFunc) {
-      // Trad_ExpList_prepend(list, tradDecFunc(escopo, endRelativoSub, venv, tenv, bloco->secDecSub->lstDecFunc));
       tradDecFunc(listAllExp, escopo, venv, tenv, bloco->secDecSub->lstDecFunc);
     }
 
@@ -127,17 +123,15 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 		}
 
 		case A_intExp: {
-			// return expTy(Tr_intExp(exp->u.intExp), Ty_Int());
       TRAD_exp translation = Trad_CarregaCT(CRCT, exp->u.intExp);
       Trad_ExpList_append(listAllExp, translation);
-			return expTy(translation, Ty_Int());
+			return createExpTy(translation, Ty_Int());
 		}
 		
     case A_boolExp: {
-			// return expTy(Tr_intExp(exp->u.intExp), Ty_Int());
       TRAD_exp translation = Trad_CarregaCT(CRCT, exp->u.boolExp);
       Trad_ExpList_append(listAllExp, translation);
-			return expTy(translation, Ty_Bool());
+			return createExpTy(translation, Ty_Bool());
 		}
 
 		case A_opExp: {
@@ -154,40 +148,34 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 						EM_error(exp->u.op.direita->pos, "Tipo inteiro necessario");
           translation = Trad_CmdSimples(SOMA);
           Trad_ExpList_append(listAllExp, translation);
-          return expTy(translation, Ty_Int());
+          return createExpTy(translation, Ty_Int());
         }
 				case A_subOp: {
 					if (left.ty->kind != Ty_int)
 						EM_error(exp->u.op.esquerda->pos, "Tipo inteiro necessario");
 					if (right.ty->kind != Ty_int)
 						EM_error(exp->u.op.direita->pos, "Tipo inteiro necessario");
-					// return expTy(Tr_arithExp(oper, left.exp, right.exp), Ty_Int());
           translation = Trad_CmdSimples(SUBT);
           Trad_ExpList_append(listAllExp, translation);
-          return expTy(translation, Ty_Int());
-					// return expTy(NULL, Ty_Int());
+          return createExpTy(translation, Ty_Int());
         }
 				case A_multOp: {
 					if (left.ty->kind != Ty_int)
 						EM_error(exp->u.op.esquerda->pos, "Tipo inteiro necessario");
 					if (right.ty->kind != Ty_int)
 						EM_error(exp->u.op.direita->pos, "Tipo inteiro necessario");
-					// return expTy(Tr_arithExp(oper, left.exp, right.exp), Ty_Int());
           translation = Trad_CmdSimples(MULT);
           Trad_ExpList_append(listAllExp, translation);
-          return expTy(translation, Ty_Int());
-					// return expTy(NULL, Ty_Int());
+          return createExpTy(translation, Ty_Int());
         }
 				case A_divOp: {
 					if (left.ty->kind != Ty_int)
 						EM_error(exp->u.op.esquerda->pos, "Tipo inteiro necessario");
 					if (right.ty->kind != Ty_int)
 						EM_error(exp->u.op.direita->pos, "Tipo inteiro necessario");
-					// return expTy(Tr_arithExp(oper, left.exp, right.exp), Ty_Int());
           translation = Trad_CmdSimples(DIVI);
           Trad_ExpList_append(listAllExp, translation);
-          return expTy(translation, Ty_Int());
-					// return expTy(NULL, Ty_Int());
+          return createExpTy(translation, Ty_Int());
         }
 
 				case A_eqOp: {
@@ -197,7 +185,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
           } else {	
             EM_error(exp->u.op.direita->pos, "Expressao inesperada na comparacao: %s", right.ty);
           }
-					return expTy(translation, Ty_Bool());
+					return createExpTy(translation, Ty_Bool());
         }
 				case A_neqOp: {
           if (is_equal_ty(right.ty, left.ty)) {
@@ -206,7 +194,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
           } else {	
             EM_error(exp->u.op.direita->pos, "Expressao inesperada na comparacao: %s", right.ty);
           }
-					return expTy(translation, Ty_Bool());
+					return createExpTy(translation, Ty_Bool());
         }
 
 				case A_gtOp: {
@@ -217,7 +205,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 						EM_error(exp->u.op.direita->pos, "%s dado; esperado %s", Ty_ToString(right.ty), Ty_ToString(left.ty));
             translation = Trad_NoExp();
           }
-					return expTy(translation, Ty_Bool());
+					return createExpTy(translation, Ty_Bool());
 				}
 
 				case A_ltOp: {
@@ -228,7 +216,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 						EM_error(exp->u.op.direita->pos, "%s dado; esperado %s", Ty_ToString(right.ty), Ty_ToString(left.ty));
             translation = Trad_NoExp();
           }
-					return expTy(translation, Ty_Bool());
+					return createExpTy(translation, Ty_Bool());
         }
 				case A_leOp: {
           if (is_equal_ty(right.ty, left.ty)) {
@@ -238,7 +226,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 						EM_error(exp->u.op.direita->pos, "%s dado; esperado %s", Ty_ToString(right.ty), Ty_ToString(left.ty));
             translation = Trad_NoExp();
           }
-					return expTy(translation, Ty_Bool());
+					return createExpTy(translation, Ty_Bool());
         }
 				case A_geOp: {
 				 if (is_equal_ty(right.ty, left.ty)) {
@@ -248,7 +236,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 						EM_error(exp->u.op.direita->pos, "comparacao entre tipos diferentes: %s dado; esperado %s", Ty_ToString(right.ty), Ty_ToString(left.ty));
             translation = Trad_NoExp();
           }
-					return expTy(translation, Ty_Bool());
+					return createExpTy(translation, Ty_Bool());
 				}
         
         case A_andOp: {
@@ -259,7 +247,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 						EM_error(exp->u.op.direita->pos, "comparacao entre tipos diferentes: %s dado; esperado %s", Ty_ToString(right.ty), Ty_ToString(left.ty));
             translation = Trad_NoExp();
           }
-					return expTy(translation, Ty_Bool());
+					return createExpTy(translation, Ty_Bool());
         }
 
         case A_orOp: {
@@ -270,11 +258,11 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 						EM_error(exp->u.op.direita->pos, "comparacao entre tipos diferentes: %s dado; esperado %s", Ty_ToString(right.ty), Ty_ToString(left.ty));
             translation = Trad_NoExp();
           }
-					return expTy(translation, Ty_Bool());
+					return createExpTy(translation, Ty_Bool());
         }
 			}
 			assert(0 && "Operador invalido na expressao");
-			return expTy(Trad_NoExp(), Ty_Int());
+			return createExpTy(Trad_NoExp(), Ty_Int());
 		}
 
     case A_leituraExp: {
@@ -295,7 +283,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
         }
       }
 
-			return expTy(Trad_NoExp(), Ty_Void());
+			return createExpTy(Trad_NoExp(), Ty_Void());
 		}
     
     case A_escritaExp: {
@@ -309,7 +297,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
         Trad_ExpList_append(listAllExp, translation);
       }
 
-			return expTy(Trad_NoExp(), Ty_Void());
+			return createExpTy(Trad_NoExp(), Ty_Void());
 		}
 
 		case A_chamaFuncExp: {
@@ -320,7 +308,6 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 			
 			if (x && x->tipo == E_funcEntry) {
 				parametros = x->u.func.parametros;
-				// for (args = exp->u.call.args; args && parametros; args = args->lstExp, parametros = parametros->tail) {
         translation = Trad_Mem(AMEM, 1);
         Trad_ExpList_append(listAllExp, translation);
 
@@ -329,7 +316,6 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 					if (!is_equal_ty(arg.ty, parametros->head))
 						EM_error(args->exp->pos, "tipo incorreto %s; esperado: %s",
 							Ty_ToString(arg.ty), Ty_ToString(parametros->head));
-					// Tr_ExpList_append(argList, arg.exp);
 				}
 
         translation = Trad_ChamaProc(CHPR, x->u.func.label, escopo);
@@ -339,13 +325,10 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 					EM_error(exp->pos, "Estao faltando argumentos!");
 				else if (args != NULL && parametros == NULL)
 					EM_error(exp->pos, "Muitos argumentos, esperado menos");
-				// translation = Tr_chamaExp(escopo, x->u.fun.escopo, x->u.fun.label, argList);
-				// return expTy(translation, x->u.fun.result);
-				return expTy(NULL, x->u.func.returnTipo);
+				return createExpTy(NULL, x->u.func.returnTipo);
 			} else {
 				EM_error(exp->pos, "funcao indefinida: %s", S_name(exp->u.chama_func.func));
-				// return expTy(translation, Ty_Int());
-				return expTy(NULL, Ty_Int());
+				return createExpTy(NULL, Ty_Int());
 			}
 		}
 
@@ -357,13 +340,11 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 
 			if (x && x->tipo == E_procEntry) {
 				parametros = x->u.proc.parametros;
-				// for (args = exp->u.call.args; args && parametros; args = args->lstExp, parametros = parametros->tail) {
 				for (args = exp->u.chama_proc.lstExp; args && parametros; args = args->lstExp, parametros = parametros->tail) {
 					struct expty arg = tradExp(listAllExp, escopo, venv, tenv, args->exp);
 					if (!is_equal_ty(arg.ty, parametros->head))
 						EM_error(args->exp->pos, "tipo incorreto %s; esperado: %s",
 							Ty_ToString(arg.ty), Ty_ToString(parametros->head));
-					// Tr_ExpList_append(argList, arg.exp);
 				}
 
         translation = Trad_ChamaProc(CHPR, x->u.proc.label, escopo);
@@ -373,13 +354,10 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 					EM_error(exp->pos, "Estao faltando argumentos!");
 				else if (args != NULL && parametros == NULL)
 					EM_error(exp->pos, "Muitos argumentos, esperado menos");
-				// translation = Tr_chamaExp(escopo, x->u.fun.escopo, x->u.fun.label, argList);
-				// return expTy(translation, Ty_Void());
-				return expTy(Trad_NoExp(), Ty_Void());
+				return createExpTy(Trad_NoExp(), Ty_Void());
 			} else {
 				EM_error(exp->pos, "procedimento indefinido: %s", S_name(exp->u.chama_func.func));
-				// return expTy(translation, Ty_Int());
-				return expTy(Trad_NoExp(), Ty_Void());
+				return createExpTy(Trad_NoExp(), Ty_Void());
 			}
 		}
 
@@ -407,7 +385,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
         Trad_ExpList_append(listAllExp, translation);
       }
 
-			return expTy(translation, Ty_Void());
+			return createExpTy(translation, Ty_Void());
 		}
 
     case A_ifExp: {
@@ -438,13 +416,11 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 				if (!is_equal_ty(then.ty, elsee.ty)) {
 					EM_error(exp->u.iff.elsee->pos, "Branches do if-then-else devem retornar o mesmo tipo");
         }
-				// return expTy(Tr_ifExp(test.exp, then.exp, elsee.exp), then.ty);
 			} else {
-				// return expTy(Tr_ifExp(test.exp, then.exp, NULL), Ty_Void());
 			}
 
       InsertLabel(listAllExp, labelAfterIf, Trad_NoExp());
-			return expTy(NULL, then.ty);
+			return createExpTy(NULL, then.ty);
 		}
 
     case A_whileExp: {
@@ -469,8 +445,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 
 			if (body.ty->kind != Ty_void)
 				EM_error(exp->u.whilee.body->pos, "Nao deve ser produzido nenhum valor");
-			// return expTy(Tr_whileExp(test.exp, body.exp), Ty_Void());
-			return expTy(NULL, Ty_Void());
+			return createExpTy(NULL, Ty_Void());
 		}
 
     case A_cmdComp: {
@@ -479,13 +454,9 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 			TRAD_expList list = Trad_ExpList();
 
       for (listaExp = exp->u.cmd_cmp.lstCmd; listaExp; listaExp = listaExp->lstExp) {
-        // newExpty = tradExp(list, escopo, venv, tenv, listaExp->exp);
-        // Trad_ExpList_prepend(list, newExpty.exp);
         newExpty = tradExp(listAllExp, escopo, venv, tenv, listaExp->exp);
-        // Trad_ExpList_prepend(listAllExp, newExpty.exp);
       }
 
-			// return expTy(Tr_seqExp(list), newExpty.ty);
       return newExpty;
 		}
 
@@ -499,18 +470,18 @@ struct expty tradVar(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 
   if (x && x->tipo == E_varEntry) {
     translation = Trad_SimpleVar(x);
-    return expTy(translation, x->u.var.varTipo);
+    return createExpTy(translation, x->u.var.varTipo);
   } else if (x && x->tipo == E_funcEntry) {
-    return expTy(NULL, x->u.func.returnTipo);
+    return createExpTy(NULL, x->u.func.returnTipo);
   } else {
     EM_error(var->pos, "Variavel indefinida %s", S_name(var->id));
-    return expTy(translation, Ty_Int());
+    return createExpTy(translation, Ty_Int());
   }
 
   assert(0);
 }
 
-TRAD_exp tradDecVar(TRAD_expList listAllExp, Escopo escopo, int* endRelativo, S_table venv, S_table tenv, A_decVar dec) {
+void tradDecVar(TRAD_expList listAllExp, Escopo escopo, int* endRelativo, S_table venv, S_table tenv, A_decVar dec) {
 			if (dec->tipo) {
 				Ty_ty type = S_look_ty(tenv, dec->tipo);
 				if (!type) {
@@ -524,12 +495,11 @@ TRAD_exp tradDecVar(TRAD_expList listAllExp, Escopo escopo, int* endRelativo, S_
 			} else {
 				EM_error(dec->pos, "Tipo indefinido para a variavel %s", S_name(dec->id));
 			}
-			return NULL;
 }
 
-TRAD_exp tradDecFunc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table tenv, A_lstDecFunc dec) {
+void tradDecFunc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table tenv, A_lstDecFunc dec) {
   A_lstDecFunc funList;
-  Ty_tyList formalTys;
+  Ty_tyList tiposParams;
   Ty_ty resultTy;
   TRAD_exp translation = Trad_NoExp();
   Label funcLabel = newlabel();
@@ -548,7 +518,7 @@ TRAD_exp tradDecFunc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
     }
     if (!resultTy) resultTy = Ty_Void();
 
-    formalTys = makeFormalTys(tenv, funList->funcDec->params);
+    tiposParams = makeParamsTipos(tenv, funList->funcDec->params);
     for (parametros = funList->funcDec->params; parametros; parametros = parametros->prox) {
       qntParams++;
     }
@@ -556,7 +526,7 @@ TRAD_exp tradDecFunc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
     int endRelativo = -(4 + qntParams - 1);
 
     Escopo funEscopo = local;
-    S_enter(venv, funList->funcDec->id, E_FuncEntry(funEscopo, (-qntParams-4), funcLabel, formalTys, resultTy));
+    S_enter(venv, funList->funcDec->id, E_FuncEntry(funEscopo, (-qntParams-4), funcLabel, tiposParams, resultTy));
 
     translation = Trad_InitProc(ENPR, funEscopo);
     InsertLabel(listAllExp, funcLabel, translation);
@@ -580,13 +550,11 @@ TRAD_exp tradDecFunc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 
     S_endScope(venv);
   }
-  // return Trad_NoExp();
-  return NULL;
 }
 
-TRAD_exp tradDecProc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table tenv, A_lstDecProc dec) {
+void tradDecProc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table tenv, A_lstDecProc dec) {
   A_lstDecProc procList;
-  Ty_tyList formalTys;
+  Ty_tyList paramsTipos;
   Ty_ty resultTy;
   TRAD_exp translation = Trad_NoExp();
   Label procLabel = newlabel();
@@ -595,9 +563,9 @@ TRAD_exp tradDecProc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
     int qntParams = 0;
     A_lstDecVar parametros;
 
-    formalTys = makeFormalTys(tenv, procList->procDec->params);
+    paramsTipos = makeParamsTipos(tenv, procList->procDec->params);
     Escopo procEscopo = local;
-    S_enter(venv, procList->procDec->id, E_ProcEntry(procEscopo, procLabel, formalTys));
+    S_enter(venv, procList->procDec->id, E_ProcEntry(procEscopo, procLabel, paramsTipos));
 
     for (parametros = procList->procDec->params; parametros; parametros = parametros->prox) {
       qntParams++;
@@ -625,7 +593,5 @@ TRAD_exp tradDecProc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 
     S_endScope(venv);
   }
-  // return Trad_NoExp();
-  return NULL;
 }
 

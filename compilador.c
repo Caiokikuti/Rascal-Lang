@@ -46,25 +46,30 @@ int main(int argc, char** argv) {
   }
   
   string fileOutName = clearFilename(argv[1]);
-  strcat(fileOutName, ".mepa");
+  strcat(fileOutName, ".MEPA");
   out = fopen(fileOutName, "w");
 
   yyin = fp;
   if (yyparse() == 0) {
-      fprintf(stderr, "\nAnálise sintática feita com sucesso!\n");
+    fprintf(stderr, "\nAnálise sintática feita com sucesso!\n");
   } else {
-      fprintf(stderr, "\nAnálise sintática com erros!\n");
+    fprintf(stderr, "\nAnálise sintática com erros!\n");
+    return EXIT_FAILURE;
   }
 
-  listaExp = SEMANT_tradProg(raiz_ast);
-
+  if (!EM_anyErrors) {
+    listaExp = SEMANT_tradProg(raiz_ast);
+  }
+  
   if (!EM_anyErrors) {
     fprintf(stderr, "\nAnálise semântica feita com sucesso!\n");
   } else {
     fprintf(stderr, "\nAnálise semântica com erros!\n");
+    return EXIT_FAILURE;
   }
 
   geraCodigoMepa(out, listaExp);
+  fprintf(stderr, "\nCódigo MEPA gerado com sucesso!\nNome do arquivo de saída: %s\n", fileOutName);
 
   fclose(out);
 

@@ -5,59 +5,31 @@ void geraCmdSimples(FILE *out, TRAD_cmdSimples cmd) {
 }
 
 void geraCmdMem(FILE *out, TRAD_mem cmd, int qtdMem) {
-  char cmdMem[4] = "";
-
-  strcpy(cmdMem, MEPA_mem[cmd]);
-
-  fprintf(out, "%s %d\n", cmdMem, qtdMem);
+  fprintf(out, "%s %d\n", MEPA_mem[cmd], qtdMem);
 }
 
 void geraCmdManipValor(FILE *out, TRAD_cmdManipValor cmd, Escopo escopo, int endRelativo) {
-  char cmdManipValor[4] = "";
-
-  strcpy(cmdManipValor, MEPA_cmdManipValor[cmd]);
-
-  fprintf(out, "%s %d %d\n", cmdManipValor, escopo, endRelativo);
+  fprintf(out, "%s %d %d\n", MEPA_cmdManipValor[cmd], escopo, endRelativo);
 }
 
 void geraCmdCarregaCT(FILE *out, TRAD_carregaCT cmd, int constante) {
-  char cmdCarregaCt[4] = "";
-
-  strcpy(cmdCarregaCt, MEPA_carregaCT[cmd]);
-
-  fprintf(out, "%s %d\n", cmdCarregaCt, constante);
+  fprintf(out, "%s %d\n", MEPA_carregaCT[cmd], constante);
 }
 
 void geraCmdDesvio(FILE *out, TRAD_cmdDesvio cmd, Label label) {
-  char cmdDesvio[4] = "";
-
-  strcpy(cmdDesvio, MEPA_cmdDesvio[cmd]);
-
-  fprintf(out, "%s %s\n", cmdDesvio, S_name(label));
+  fprintf(out, "%s %s\n", MEPA_cmdDesvio[cmd], S_name(label));
 }
 
 void geraCmdInitProc(FILE *out, TRAD_cmdProc cmd, Escopo escopo) {
-  char cmdProc[4] = "";
-
-  strcpy(cmdProc, MEPA_cmdProc[cmd]);
-
-  fprintf(out, "%s %d\n", cmdProc, escopo);
+  fprintf(out, "%s %d\n", MEPA_cmdProc[cmd], escopo);
 }
 
 void geraCmdEndProc(FILE *out, TRAD_cmdProc cmd, Escopo escopo, int qntParams) {
-  char cmdProc[4] = "";
-
-  strcpy(cmdProc, MEPA_cmdProc[cmd]);
-
-  fprintf(out, "%s %d %d\n", cmdProc, escopo, qntParams);
+  fprintf(out, "%s %d %d\n", MEPA_cmdProc[cmd], escopo, qntParams);
 }
 
 void geraCmdChamaProc(FILE *out, TRAD_cmdProc cmd, Escopo escopo, Label label) {
-  char cmdProc[4] = "";
-
-  strcpy(cmdProc, MEPA_cmdProc[cmd]);
-
-  fprintf(out, "%s %s %d\n", cmdProc, S_name(label), escopo);
+  fprintf(out, "%s %s %d\n", MEPA_cmdProc[cmd], S_name(label), escopo);
 }
 
 void geraCmdNewLabel(FILE *out, Label label) {
@@ -106,11 +78,6 @@ void geraCodigoMepaCases(FILE *out, TRAD_exp exp) {
     case TRAD_NOEXP:
       geraCmdSimples(out, exp->u.cmdSimples);
     break;
-    
-    default:
-
-    break;
-
     }
 }
 

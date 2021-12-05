@@ -39,14 +39,5 @@ S_table E_base_tenv(void){
 
 S_table E_base_venv(void){
   S_table venv = S_empty();
-	// Create function environment entries
-	// E_enventry env_write = E_FunEntry(Tr_global(), S_Symbol("write"),
-	// 	Ty_TyList(Ty_String(), NULL), Ty_Void());
-	// E_enventry env_read = E_FunEntry(Tr_global(), S_Symbol("read"),
-	// 	Ty_TyList(Ty_String(), NULL), Ty_Void());
-	
-	// // Add the functions to the environment
-	// S_enter(venv, S_Symbol("write"), env_write);
-	// S_enter(venv, S_Symbol("read"), env_read);
 	return venv;
 }
