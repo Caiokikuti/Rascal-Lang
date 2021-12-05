@@ -10,13 +10,14 @@ E_enventry E_VarEntry(Escopo escopo, int endRelativo, S_symbol id, Ty_ty ty){
 	return varEntry;
 }
 
-E_enventry E_FuncEntry(Escopo escopo, S_symbol label, Ty_tyList formals, Ty_ty result){
+E_enventry E_FuncEntry(Escopo escopo, int endRelativo, S_symbol label, Ty_tyList formals, Ty_ty result){
 	E_enventry funEntry = checked_malloc(sizeof(*funEntry));
 	funEntry->tipo = E_funcEntry;
 	funEntry->u.func.parametros = formals;
 	funEntry->u.func.returnTipo = result;
 	funEntry->u.func.escopo = escopo;
 	funEntry->u.func.label = label;
+	funEntry->u.func.endRelativo = endRelativo;
 	return funEntry;
 }
 

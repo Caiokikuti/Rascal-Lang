@@ -32,6 +32,7 @@ struct E_enventry_ {
 			Ty_ty returnTipo;
 			S_symbol label;
 			Escopo escopo;
+      int endRelativo;
 		} func;
 		struct {
 			Ty_tyList parametros;
@@ -42,7 +43,7 @@ struct E_enventry_ {
 };
 
 E_enventry E_VarEntry(Escopo escopo, int endRelativo, S_symbol id, Ty_ty varTipo);
-E_enventry E_FuncEntry(Escopo escopo, S_symbol label, Ty_tyList parametros, Ty_ty returnTipo);
+E_enventry E_FuncEntry(Escopo escopo, int endRelativo, S_symbol label, Ty_tyList parametros, Ty_ty returnTipo);
 E_enventry E_ProcEntry(Escopo escopo, S_symbol label, Ty_tyList parametros);
 
 S_table E_base_tenv(void); /* Ty_ ty environment */

@@ -316,12 +316,14 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 			A_lstExp args = NULL;
 			Ty_tyList parametros;
 			E_enventry x = S_look(venv, exp->u.chama_func.func);
-			// Tr_exp translation = Trad_NoExp();
-			// Tr_expList argList = Trad_ExpList();
+      TRAD_exp translation = Trad_NoExp();
 			
 			if (x && x->tipo == E_funcEntry) {
 				parametros = x->u.func.parametros;
 				// for (args = exp->u.call.args; args && parametros; args = args->lstExp, parametros = parametros->tail) {
+        translation = Trad_Mem(AMEM, 1);
+        Trad_ExpList_append(listAllExp, translation);
+
 				for (args = exp->u.chama_func.lstExp; args && parametros; args = args->lstExp, parametros = parametros->tail) {
 					struct expty arg = tradExp(listAllExp, escopo, venv, tenv, args->exp);
 					if (!is_equal_ty(arg.ty, parametros->head))
@@ -329,6 +331,9 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 							Ty_ToString(arg.ty), Ty_ToString(parametros->head));
 					// Tr_ExpList_append(argList, arg.exp);
 				}
+
+        translation = Trad_ChamaProc(CHPR, x->u.func.label, escopo);
+        Trad_ExpList_append(listAllExp, translation);
 
 				if (args == NULL && parametros != NULL)
 					EM_error(exp->pos, "Estao faltando argumentos!");
@@ -350,9 +355,6 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
 			E_enventry x = S_look(venv, exp->u.chama_proc.proc);
       TRAD_exp translation = Trad_NoExp();
 
-			// Tr_exp translation = Trad_NoExp();
-			// Tr_expList argList = Trad_ExpList();
-			
 			if (x && x->tipo == E_procEntry) {
 				parametros = x->u.proc.parametros;
 				// for (args = exp->u.call.args; args && parametros; args = args->lstExp, parametros = parametros->tail) {
@@ -385,6 +387,7 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
       E_enventry x = S_look(venv, exp->u.atrib.var->id);
 			struct expty var = tradVar(listAllExp, escopo, venv, tenv, exp->u.atrib.var);
 			struct expty newExp = tradExp(listAllExp, escopo, venv, tenv, exp->u.atrib.exp);
+      TRAD_exp translation = Trad_NoExp();
 			
 			if (!is_equal_ty(var.ty, newExp.ty)) {
         if(x->tipo == E_funcEntry) {
@@ -396,8 +399,13 @@ struct expty tradExp(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
         }
       }
 
-      TRAD_exp translation = Trad_CmdManipValor(ARMZ, x->u.var.escopo, x->u.var.endRelativo);
-      Trad_ExpList_append(listAllExp, translation);
+      if(x->tipo == E_varEntry) {
+        translation = Trad_CmdManipValor(ARMZ, x->u.var.escopo, x->u.var.endRelativo);
+        Trad_ExpList_append(listAllExp, translation);
+      } else if (x->tipo == E_funcEntry) {
+        translation = Trad_CmdManipValor(ARMZ, x->u.func.escopo, x->u.func.endRelativo);
+        Trad_ExpList_append(listAllExp, translation);
+      }
 
 			return expTy(translation, Ty_Void());
 		}
@@ -523,10 +531,13 @@ TRAD_exp tradDecFunc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
   A_lstDecFunc funList;
   Ty_tyList formalTys;
   Ty_ty resultTy;
-  int endRelativo = -4;
+  TRAD_exp translation = Trad_NoExp();
+  Label funcLabel = newlabel();
 
   for (funList = dec; funList; funList = funList->prox) {
     resultTy = NULL;
+    int qntParams = 0;
+    A_lstDecVar parametros;
 
     if (funList->funcDec->returnType) {
       resultTy = S_look(tenv, funList->funcDec->returnType);
@@ -538,26 +549,34 @@ TRAD_exp tradDecFunc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
     if (!resultTy) resultTy = Ty_Void();
 
     formalTys = makeFormalTys(tenv, funList->funcDec->params);
-    Escopo funEscopo = local;
-    S_enter(venv, funList->funcDec->id, E_FuncEntry(funEscopo, funList->funcDec->id, formalTys, resultTy));
-  }
+    for (parametros = funList->funcDec->params; parametros; parametros = parametros->prox) {
+      qntParams++;
+    }
 
-  E_enventry funEntry = NULL;
-  for (funList = dec; funList; funList = funList->prox) {
-    funEntry = S_look(venv, funList->funcDec->id);
+    int endRelativo = -(4 + qntParams - 1);
+
+    Escopo funEscopo = local;
+    S_enter(venv, funList->funcDec->id, E_FuncEntry(funEscopo, (-qntParams-4), funcLabel, formalTys, resultTy));
+
+    translation = Trad_InitProc(ENPR, funEscopo);
+    InsertLabel(listAllExp, funcLabel, translation);
+
+    E_enventry funEntry = S_look(venv, funList->funcDec->id);
+
     S_beginScope(venv);
     Ty_tyList paramTys = funEntry->u.func.parametros;
-    A_lstDecVar parametros;
-
+    
     for (parametros = funList->funcDec->params; parametros; 
       parametros = parametros->prox,
       paramTys = paramTys->tail) {
       S_enter(venv, parametros->decVar->id, E_VarEntry(local, endRelativo, parametros->decVar->id, paramTys->head));
-      endRelativo--;
+      endRelativo++;
     }
 
-    // struct expty e = tradExp(funEntry->u.func.escopo, venv, tenv, funList->funcDec->bloco->cmdComp);
     tradBloco(listAllExp, funEntry->u.func.escopo, venv, tenv, funList->funcDec->bloco, FALSE);
+
+    translation = Trad_EndProc(RTPR, funEntry->u.func.escopo, qntParams);
+    Trad_ExpList_append(listAllExp, translation);
 
     S_endScope(venv);
   }
@@ -569,29 +588,34 @@ TRAD_exp tradDecProc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_tab
   A_lstDecProc procList;
   Ty_tyList formalTys;
   Ty_ty resultTy;
-  int endRelativo = -4;
   TRAD_exp translation = Trad_NoExp();
   Label procLabel = newlabel();
 
   for (procList = dec; procList; procList = procList->prox) {
+    int qntParams = 0;
+    A_lstDecVar parametros;
+
     formalTys = makeFormalTys(tenv, procList->procDec->params);
     Escopo procEscopo = local;
     S_enter(venv, procList->procDec->id, E_ProcEntry(procEscopo, procLabel, formalTys));
 
+    for (parametros = procList->procDec->params; parametros; parametros = parametros->prox) {
+      qntParams++;
+    }
+
+    int endRelativo = -(4 + qntParams - 1);
+
     translation = Trad_InitProc(ENPR, procEscopo);
     InsertLabel(listAllExp, procLabel, translation);
 
-    E_enventry procEntry = S_look(venv, procList->procDec->id);;
-    int qntParams = 0;
+    E_enventry procEntry = S_look(venv, procList->procDec->id);
 
     S_beginScope(venv);
     Ty_tyList paramTys = procEntry->u.proc.parametros;
-    A_lstDecVar parametros;
 
     for (parametros = procList->procDec->params; parametros; parametros = parametros->prox, paramTys = paramTys->tail) {
       S_enter(venv, parametros->decVar->id, E_VarEntry(local, endRelativo, parametros->decVar->id, paramTys->head));
-      endRelativo--;
-      qntParams++;
+      endRelativo++;
     }
 
     tradBloco(listAllExp, procEntry->u.proc.escopo, venv, tenv, procList->procDec->bloco, FALSE);
