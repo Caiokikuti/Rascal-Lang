@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "includes/ast.h"
 #include "includes/semant.h"
 #include "includes/errormsg.h"
 #include "includes/tradMepa.h"
+#include "includes/geraCodigoMepa.h"
 #include "sintatico.tab.h"
 
 A_programa raiz_ast;
@@ -15,8 +17,18 @@ A_programa raiz_ast;
    $ ./compilador arquivo.ras
 */
 
+string clearFilename (string file) {
+  string fileName = checked_malloc(20);
+  for (int i = 0; file[i] != '.'; i++) { 
+    strncat(fileName, &file[i], 1);
+  }
+
+  return fileName;
+}
+
 int main(int argc, char** argv) {
   FILE* fp;
+  FILE* out;
   extern FILE* yyin;
   TRAD_expList listaExp;
 
@@ -27,10 +39,15 @@ int main(int argc, char** argv) {
   }
 
   fp = fopen(argv[1], "r");
+
   if (fp == NULL) {
       printf("Erro: não foi possível ler o arquivo '%s'\n", argv[1]);
       return EXIT_FAILURE;
   }
+  
+  string fileOutName = clearFilename(argv[1]);
+  strcat(fileOutName, ".mepa");
+  out = fopen(fileOutName, "w");
 
   yyin = fp;
   if (yyparse() == 0) {
@@ -46,6 +63,10 @@ int main(int argc, char** argv) {
   } else {
     fprintf(stderr, "\nAnálise semântica com erros!\n");
   }
+
+  geraCodigoMepa(out, listaExp);
+
+  fclose(out);
 
   // raiz_ast está apontando para o nó raiz da AST (programa) caso o parsing foi bem sucedido.
   return EXIT_SUCCESS;
