@@ -81,9 +81,31 @@ TRAD_exp Trad_CmdDesvio(TRAD_cmdDesvio cmd, Label label){
   return tradExp;
 }
 
-TRAD_exp Trad_ChamaProc(){
+TRAD_exp Trad_InitProc(TRAD_cmdProc cmdProc, Escopo escopo) {
+  TRAD_exp tradExp = checked_malloc(sizeof(*tradExp));
+  tradExp->tipo = TRAD_INITPROC;
+  tradExp->u.INITPROC.cmdProc = cmdProc;
+  tradExp->u.INITPROC.escopo = escopo;
+
+  return tradExp;
+}
+
+TRAD_exp Trad_EndProc(TRAD_cmdProc cmdProc, Escopo escopo, int qntParams) {
+  TRAD_exp tradExp = checked_malloc(sizeof(*tradExp));
+  tradExp->tipo = TRAD_ENDPROC;
+  tradExp->u.ENDPROC.cmdProc = cmdProc;
+  tradExp->u.ENDPROC.escopo = escopo;
+  tradExp->u.ENDPROC.qntParams = qntParams;
+
+  return tradExp;
+}
+
+TRAD_exp Trad_ChamaProc(TRAD_cmdProc cmdProc, Label label, Escopo escopo) {
   TRAD_exp tradExp = checked_malloc(sizeof(*tradExp));
   tradExp->tipo = TRAD_CHAMAPROC;
+  tradExp->u.CHAMAPROC.cmdProc = cmdProc;
+  tradExp->u.CHAMAPROC.label = label;
+  tradExp->u.CHAMAPROC.escopo = escopo;
 
   return tradExp;
 }

@@ -39,7 +39,7 @@ static char MEPA_cmdManipValor[][12] = {
   "ARMZ",
 };
 
-static char MEPA_chamaProc[][12] = {
+static char MEPA_cmdProc[][12] = {
   "CHPR",
   "ENPR",
   "RTPR",
@@ -88,7 +88,7 @@ typedef enum  {
   CHPR,
   ENPR,
   RTPR,
-} TRAD_chamaProc;
+} TRAD_cmdProc;
 
 typedef enum  {
   CRCT,
@@ -107,6 +107,8 @@ struct TRAD_exp_ {
     TRAD_CARREGACT,
     TRAD_DESVIO,
     TRAD_NOEXP,
+    TRAD_INITPROC,
+    TRAD_ENDPROC,
     TRAD_CHAMAPROC,
     SIMPLEVAR,
     NEWLABEL,
@@ -142,10 +144,21 @@ struct TRAD_exp_ {
     } DESVIO;
 
 		struct {
-			TRAD_chamaProc cmdChamaProc;
+			TRAD_cmdProc cmdProc;
       Escopo escopo;
-      int endRelativo;
-    } CHAMAPROC; // not ready
+    } INITPROC;
+		
+    struct {
+			TRAD_cmdProc cmdProc;
+      Escopo escopo;
+      int qntParams;
+    } ENDPROC;
+    
+    struct {
+			TRAD_cmdProc cmdProc;
+      Label label;
+      Escopo escopo;
+    } CHAMAPROC;
   } u;
 };
 
@@ -166,7 +179,9 @@ TRAD_exp Trad_Mem(TRAD_mem cmd, int qtdMem);
 TRAD_exp Trad_CmdManipValor(TRAD_cmdManipValor cmd, Escopo escopo, int endRelativo);
 TRAD_exp Trad_CarregaCT(TRAD_carregaCT cmd, int constante);
 TRAD_exp Trad_CmdDesvio(TRAD_cmdDesvio cmd, Label label);
-TRAD_exp Trad_ChamaProc(); // not ready
+TRAD_exp Trad_InitProc(TRAD_cmdProc cmdProc, Escopo escopo);
+TRAD_exp Trad_EndProc(TRAD_cmdProc cmdProc, Escopo escopo, int qntParams);
+TRAD_exp Trad_ChamaProc(TRAD_cmdProc cmdProc, Label label, Escopo escopo);
 TRAD_expList Trad_ExpList();
 void InsertLabel(TRAD_expList list, Label label, TRAD_exp expr);
 void Trad_ExpList_append(TRAD_expList list, TRAD_exp expr);
