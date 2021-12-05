@@ -79,8 +79,9 @@ void tradBloco(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table ten
     tradDecVar(listAllExp, escopo, &endRelativoVar, venv, tenv, listaDecVar->decVar);
   }
 
-  Trad_ExpList_append(listAllExp, Trad_Mem(AMEM, qntVar));
-
+  if (qntVar > 0) {
+    Trad_ExpList_append(listAllExp, Trad_Mem(AMEM, qntVar));
+  }
 
   if (bloco->secDecSub) {
     if(escopoGlobal) {
@@ -104,8 +105,11 @@ void tradBloco(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table ten
     tradExp(listAllExp, escopo, venv, tenv, bloco->cmdComp);
   }
 
-  TRAD_exp translation = Trad_Mem(DMEM, qntVar);
-  Trad_ExpList_append(listAllExp, translation);
+  if (qntVar > 0) {
+    TRAD_exp translation = Trad_Mem(DMEM, qntVar);
+    Trad_ExpList_append(listAllExp, translation);
+  }
+  
 
   S_endScope(venv);
   S_endScope(tenv);

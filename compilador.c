@@ -45,8 +45,7 @@ int main(int argc, char** argv) {
       return EXIT_FAILURE;
   }
   
-  string fileOutName = clearFilename(argv[1]);
-  strcat(fileOutName, ".MEPA");
+  string fileOutName = "out.MEPA";
   out = fopen(fileOutName, "w");
 
   yyin = fp;
