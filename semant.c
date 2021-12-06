@@ -537,7 +537,6 @@ void tradDecFunc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table t
 
     E_enventry funEntry = S_look(venv, funList->funcDec->id);
 
-    S_beginScope(venv);
     Ty_tyList paramTys = funEntry->u.func.parametros;
     
     for (parametros = funList->funcDec->params; parametros; 
@@ -552,7 +551,6 @@ void tradDecFunc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table t
     translation = Trad_EndProc(RTPR, funEntry->u.func.escopo, qntParams);
     Trad_ExpList_append(listAllExp, translation);
 
-    S_endScope(venv);
   }
 }
 
@@ -582,7 +580,6 @@ void tradDecProc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table t
 
     E_enventry procEntry = S_look(venv, procList->procDec->id);
 
-    S_beginScope(venv);
     Ty_tyList paramTys = procEntry->u.proc.parametros;
 
     for (parametros = procList->procDec->params; parametros; parametros = parametros->prox, paramTys = paramTys->tail) {
@@ -595,7 +592,6 @@ void tradDecProc(TRAD_expList listAllExp, Escopo escopo, S_table venv, S_table t
     translation = Trad_EndProc(RTPR, procEntry->u.proc.escopo, qntParams);
     Trad_ExpList_append(listAllExp, translation);
 
-    S_endScope(venv);
   }
 }
 
